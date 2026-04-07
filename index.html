@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Стратегія 18x10 (Move Points)</title>
+<style>
+body { font-family: Arial; background:#f0f0f0; display:flex; justify-content:center; gap:20px; }
+#grid { display:grid; grid-template-columns: repeat(18, 60px); width:1080px; }
+.cell { width:60px; height:60px; border:1px solid #ddd; position:relative; }
+.p1 { background:#d0f0ff; }
+.p2 { background:#ffd0d0; }
+.move { background:rgba(0,255,0,0.3); }
+.future { background:rgba(255,255,0,0.4); }
+.attackBorder { outline:3px solid red; cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text y="24" font-size="24">⚔️</text></svg>') 0 24, auto; }
+.city { background:gold; }
+.selected { outline:3px solid black; }
+.unitImg { width:100%; height:100%; object-fit:cover; }
+.hp { position:absolute; bottom:2px; right:2px; font-size:12px; color:white; background:rgba(0,0,0,0.6); padding:2px; }
+.mp { position:absolute; top:2px; left:2px; font-size:11px; color:black; background:rgba(255,255,255,0.7); padding:1px 3px; border-radius:4px; }
+.panel { width:200px; }
+.card { background:white; padding:8px; margin-bottom:10px; border-radius:8px; }
+button { width:100%; margin-top:5px; }
+</style>
+</head>
+<body>
+
+<div class="panel" id="leftPanel"></div>
+
+<div>
+<h3 style="text-align:center">
+Хід: <span id="turn"></span> | Гравець: <span id="player"></span><br>
+💰 P1: <span id="money1"></span> | P2: <span id="money2"></span>
+</h3>
+<div id="grid"></div>
+<button onclick="endTurn()">Закінчити хід</button>
+</div>
+
+<div class="panel" id="rightPanel"></div>
+
+<script>
+const width = 18;
+const height = 10;
+let currentPlayer = 1;
+let turn = 1;
+let selectedUnit = null;
+let buyMode = null;
+
+function fm(n){return (n/1000)+'к';}
+
+const unitTypes={
+ shooter:{name:"Стрілець",speed:1,atk:15,hp:50,range:3,price:50000},
+ infantry:{name:"Піхота",speed:3,atk:20,hp:50,range:1,price:40000},
+ cavalry:{name:"Кавалерія",speed:4,atk:20,hp:55,range:1,price:120000}
+};
+
+let state={
+ units:[],
+ money:{1:500000,2:500000},
+ cities:[
+  {x:1,y:4,owner:1},{x:1,y:5,owner:1},
+  {x:16,y:4,owner:2},{x:16,y:5,owner:2}
+ ]
+};
+
+function createGrid(){
+ let g=document.getElementById('grid'); g.innerHTML='';
+ for(let y=0;y<height;y++){
+  for(let x=0;x<width;x++){
+   let d=document.createElement('div');
+   d.className='cell '+(x<9?'p1':'p2');
+   d.onclick=()=>cellClick(x,y);
+   d.dataset.x=x; d.dataset.y=y;
+   g.appendChild(d);
+  }
+ }
+}
+
+function getCell(x,y){return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);}
+
+function render(){
+ document.getElementById('turn').innerText=turn;
+ document.getElementById('player').innerText=currentPlayer;
+ document.getElementById('money1').innerText=fm(state.money[1]);
+ document.getElementById('money2').innerText=fm(state.money[2]);
+
+ document.querySelectorAll('.cell').forEach(c=>{
+  c.innerHTML='';
+  c.classList.remove('move','future','attackBorder','selected','city');
+ });
+
+ // cities
+ state.cities.forEach(c=>{
+  getCell(c.x,c.y).classList.add('city');
+ });
+
+ // units
+ state.units.forEach(u=>{
+  let cell=getCell(u.x,u.y);
+  let img=document.createElement('img');
+  img.src='https://picsum.photos/60?'+u.type;
+  img.className='unitImg';
+  cell.appendChild(img);
+
+  let hp=document.createElement('div');
+  hp.className='hp'; hp.innerText=u.hp;
+  cell.appendChild(hp);
+
+  let mp=document.createElement('div');
+  mp.className='mp'; mp.innerText=u.movePoints;
+  cell.appendChild(mp);
+
+  if(u===selectedUnit) cell.classList.add('selected');
+ });
+
+ if(selectedUnit){
+  highlightMoves(selectedUnit);
+  highlightAttacks(selectedUnit);
+ }
+
+ renderPanels();
+}
+
+function renderPanels(){
+ let html='';
+ Object.keys(unitTypes).forEach(k=>{
+  let u=unitTypes[k];
+  html+=`<div class='card'><b>${u.name}</b>
+  🏃${u.speed} ⚔️${u.atk} ❤️${u.hp} 🎯${u.range}
+  💰${fm(u.price)}
+  <button onclick="startBuy('${k}')">Купити</button></div>`;
+ });
+ document.getElementById('leftPanel').innerHTML=html;
+ document.getElementById('rightPanel').innerHTML=html;
+}
+
+function startBuy(t){buyMode=t;}
+function isOwnSide(x){return currentPlayer===1?x<9:x>=9;}
+
+function cellClick(x,y){
+ let unit=state.units.find(u=>u.x===x&&u.y===y);
+
+ // BUY
+ if(buyMode){
+  if(unit||!isOwnSide(x)) return;
+  let u=unitTypes[buyMode];
+  if(state.money[currentPlayer]<u.price) return;
+
+  state.money[currentPlayer]-=u.price;
+  state.units.push({
+    x,y,owner:currentPlayer,type:buyMode,
+    hp:u.hp,
+    movePoints:0,
+    attacked:true
+  });
+  buyMode=null;render();return;
+ }
+
+ // SELECT
+ if(unit&&unit.owner===currentPlayer){selectedUnit=unit;render();return;}
+
+ // ATTACK
+ if(unit&&unit.owner!==currentPlayer&&selectedUnit&&!selectedUnit.attacked){
+  attackUnit(selectedUnit,unit);
+  render();return;
+ }
+
+ // MOVE
+ if(selectedUnit && selectedUnit.movePoints>0){
+  if(state.units.some(u=>u.x===x&&u.y===y)) return;
+  moveUnit(selectedUnit,x,y);
+  render();
+ }
+}
+
+function moveUnit(u,x,y){
+ let dx=Math.abs(u.x-x),dy=Math.abs(u.y-y);
+ let dist=Math.max(dx,dy);
+
+ if(dist<=u.movePoints){
+  u.movePoints -= dist;
+  u.x=x; u.y=y;
+ }
+}
+
+function attackUnit(a,d){
+ let t=unitTypes[a.type];
+ let dx=Math.abs(a.x-d.x),dy=Math.abs(a.y-d.y);
+ let dist=Math.max(dx,dy);
+
+ if(!a.attacked && dist<=t.range){
+  d.hp-=t.atk;
+  a.attacked=true;
+  if(d.hp<=0) state.units=state.units.filter(u=>u!==d);
+ }
+}
+
+function highlightMoves(u){
+ let s=u.movePoints;
+ for(let dx=-s;dx<=s;dx++){
+  for(let dy=-s;dy<=s;dy++){
+   let nx=u.x+dx,ny=u.y+dy;
+   if(nx>=0&&ny>=0&&nx<width&&ny<height&&Math.max(Math.abs(dx),Math.abs(dy))<=s){
+    let cell=getCell(nx,ny);
+    if(u.movePoints>0) cell.classList.add('move');
+    else cell.classList.add('future');
+   }
+  }
+ }
+}
+
+function highlightAttacks(u){
+ let r=unitTypes[u.type].range;
+ state.units.forEach(e=>{
+  if(e.owner!==currentPlayer){
+   let dx=Math.abs(e.x-u.x),dy=Math.abs(e.y-u.y);
+   if(Math.max(dx,dy)<=r && !u.attacked){
+    getCell(e.x,e.y).classList.add('attackBorder');
+   }
+  }
+ });
+}
+
+function endTurn(){
+ currentPlayer=currentPlayer===1?2:1;
+ if(currentPlayer===1)turn++;
+ state.money[currentPlayer]+=100000;
+
+ state.units.forEach(u=>{
+  if(u.owner===currentPlayer){
+    u.movePoints = unitTypes[u.type].speed;
+    u.attacked = false;
+  }
+ });
+
+ selectedUnit=null;
+ render();
+}
+
+createGrid();render();
+</script>
+</body>
+</html>
