@@ -296,26 +296,64 @@ function startBuy(type, player){
 
 function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
-function cellClick(x,y){
-// дозволяємо грати локально навіть без кімнати
+function cellClick(x, y){
+  // --- локальна гра без кімнати ---
+  let unit = state.units.find(u => u.x === x && u.y === y);
 
-  let unit=state.units.find(u=>u.x===x&&u.y===y);
-
+  // --- Режим покупки ---
   if(buyMode){
     if(currentPlayer !== playerId) return; // не твій хід
     if(unit || !isOwnSide(x)) return;
 
-    let u=unitTypes[buyMode];
-    if(state.money[playerId]<u.price) return;
+    let u = unitTypes[buyMode];
+    if(state.money[playerId] < u.price) return;
 
-    state.money[playerId]-=u.price;
-    state.units.push({x,y,owner:playerId,type:buyMode,hp:u.hp,movePoints:0,attacked:true});
+    state.money[playerId] -= u.price;
+    state.units.push({
+      x, y,
+      owner: playerId,
+      type: buyMode,
+      hp: u.hp,
+      movePoints: 0,
+      attacked: true
+    });
 
-    buyMode=null;
+    buyMode = null;
     saveState();
     render();
     return;
   }
+
+  // --- Виділення свого юніта ---
+  if(unit && unit.owner === currentPlayer){
+    selectedUnit = unit;
+    render();
+    return;
+  }
+
+  // --- Атака чужого юніта ---
+  if(unit && unit.owner !== currentPlayer && selectedUnit && !selectedUnit.attacked){
+    // перевірка, що юніт може атакувати
+    let t = unitTypes[selectedUnit.type];
+    let dx = Math.abs(selectedUnit.x - unit.x);
+    let dy = Math.abs(selectedUnit.y - unit.y);
+    if(Math.max(dx, dy) <= t.range){
+      attackUnit(selectedUnit, unit);
+      saveState();
+      render();
+    }
+    return;
+  }
+
+  // --- Рух свого юніта ---
+  if(selectedUnit && selectedUnit.owner === currentPlayer && selectedUnit.movePoints > 0){
+    // перевірка, що клітинка вільна
+    if(state.units.some(u => u.x === x && u.y === y)) return;
+    moveUnit(selectedUnit, x, y);
+    saveState();
+    render();
+  }
+}
 
   if(unit && unit.owner===currentPlayer){ selectedUnit=unit; render(); return; }
   if(unit && unit.owner!==currentPlayer && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
@@ -364,10 +402,29 @@ function highlightAttacks(u){ let r=unitTypes[u.type].range;
   }});
 }
 
-function endTurn(){ currentPlayer=currentPlayer===1?2:1; if(currentPlayer===1) turn++;
+function endTurn(){
+  // не дозволяємо закінчити хід іншого гравця
+  if(currentPlayer!==playerId){
+    alert("Зараз не ваш хід!");
+    return;
+  }
+
+  // міняємо хід
+  currentPlayer = currentPlayer===1 ? 2 : 1;
+  if(currentPlayer===1) turn++;
+
+  // додаємо гроші і оновлюємо рух юнітів тільки для поточного гравця
   state.money[currentPlayer]+=100000;
-  state.units.forEach(u=>{ if(u.owner===currentPlayer){ u.movePoints=unitTypes[u.type].speed; u.attacked=false; }});
-  selectedUnit=null; saveState(); render();
+  state.units.forEach(u=>{
+    if(u.owner===currentPlayer){
+      u.movePoints = unitTypes[u.type].speed;
+      u.attacked = false;
+    }
+  });
+
+  selectedUnit=null;
+  saveState();
+  render();
 }
 
 function saveState(){ if(!room) return; set(ref(db,'games/'+room),{state,turn,currentPlayer}); }
