@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Beluga 3 Multiplayer v1</title>
+<title>Beluga 3 Multiplayer</title>
 <style>
   body {
     font-family: Arial;
@@ -165,7 +165,7 @@
 </head>
 <body>
 
-<!-- Лобі для вибору кімнати та гравця -->
+<!-- Лобі -->
 <div id="lobby">
   <h2>Beluga 3 — Multiplayer Lobby</h2>
   <label>
@@ -185,7 +185,7 @@
   <div id="status" style="color:red; margin-top:10px;"></div>
 </div>
 
-<!-- Основна ігрова зона -->
+<!-- Гра -->
 <div id="gameArea">
   <div class="panel" id="leftPanel"></div>
   <div style="display:flex; flex-direction: column; align-items:center; gap:8px;">
@@ -198,18 +198,16 @@
 
     <div id="grid"></div>
 
-    <button onclick="endTurn()" class="buyBtn" style="width:200px;">Закінчити хід</button>
-    <button onclick="newGame()" class="buyBtn" style="width:200px; background:#2196F3; margin-top:6px;">Нова гра</button>
+    <button id="endTurnBtn" class="buyBtn" style="width:200px;">Закінчити хід</button>
+    <button id="newGameBtn" class="buyBtn" style="width:200px; background:#2196F3; margin-top:6px;">Нова гра</button>
   </div>
   <div class="panel" id="rightPanel"></div>
 </div>
 
-<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, get, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, get, update, runTransaction } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-  // Firebase config (твій)
   const firebaseConfig = {
     apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY",
     authDomain: "beluga-a7197.firebaseapp.com",
@@ -223,21 +221,11 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // --- Глобальні змінні ---
+  // --- Константи ---
   const width = 18;
   const height = 10;
 
-  let room = null;
-  let playerNum = null;
-
-  // Стани гри, ініціалізуються при старті або підключенні
-  let state = null;
-  let currentPlayer = 1;
-  let turn = 1;
-  let selectedUnit = null;
-  let buyMode = null;
-
-  // DOM елементи
+  // --- DOM ---
   const lobby = document.getElementById('lobby');
   const gameArea = document.getElementById('gameArea');
   const turnEl = document.getElementById('turn');
@@ -248,8 +236,11 @@
   const rightPanel = document.getElementById('rightPanel');
   const gridEl = document.getElementById('grid');
   const statusEl = document.getElementById('status');
+  const joinBtn = document.getElementById('joinBtn');
+  const endTurnBtn = document.getElementById('endTurnBtn');
+  const newGameBtn = document.getElementById('newGameBtn');
 
-  // --- Типи юнітів ---
+  // --- Юніти ---
   const unitTypes = {
     shooter:{
       name:"Стрілець",
@@ -271,7 +262,14 @@
     }
   };
 
-  // --- Ініціалізація нової гри ---
+  // --- Змінні гри ---
+  let room = null;
+  let playerNum = null;
+  let state = null;
+  let selectedUnit = null;
+  let buyMode = null;
+
+  // --- Ініціалізація гри ---
   function createNewGameState(){
     return {
       units: [],
@@ -305,7 +303,7 @@
     return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
   }
 
-  // --- Форматування грошей ---
+  // --- Формат грошей ---
   function fm(n){ return (n/1000)+'к'; }
 
   // --- Рендер гри ---
@@ -406,11 +404,12 @@
     buyMode = type;
   }
 
+  // --- Визначити чи клітинка на власній стороні ---
   function isOwnSide(x){
     return playerNum === 1 ? x < 9 : x >= 9;
   }
 
-  // --- Обробка кліку на клітинку ---
+  // --- Клік по клітинці ---
   function cellClick(x,y){
     if(!state) return;
 
@@ -457,7 +456,7 @@
     }
   }
 
-  // --- Переміщення юніта ---
+  // --- Рух юніта ---
   function moveUnit(u, x, y){
     let dx = Math.abs(u.x - x);
     let dy = Math.abs(u.y - y);
@@ -526,11 +525,9 @@
   function endTurn(){
     if(!state) return;
 
-    state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
-    if(state.currentPlayer === 1) state.turn++;
+    if(state.currentPlayer !== playerNum){
+      alert("Не ваш хід!");
+      return;
+    }
 
-    // Додати гроші поточному гравцю
-    state.money[state.currentPlayer] += 100000;
-
-    // Відновити рух і атаку юнітам поточного гравця
-    state.units
+    state.currentPlayer = state.currentPlayer === 1 ? 2 :
