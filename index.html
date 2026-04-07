@@ -20,6 +20,21 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 
   opacity: 0.9; /* напівпрозорість */
 }
+  /* Основні панелі залишаються 220px на ПК */
+.panel {
+  width: 220px;
+}
+
+/* Мобільні стилі */
+@media (max-width: 768px) {
+  .panel {
+    width: 95%;                 /* на всю ширину майже */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
+    gap: 4px;                   /* мінімальний відступ */
+    margin-bottom: 10px;
+  }
+}
 
   /* === MOBILE OPTIMIZATION + BONUS SCROLL === */
 /* === MOBILE FULL WIDTH === */
@@ -31,13 +46,15 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 
 @media (max-width: 768px) {
    #gridWrapper {
-    transform: scale(0.5);  /* трохи менше */
+    transform: scale(1);  /* трохи менше */
     width: 100vw;
   }
 
+
+
   #grid {
     display: grid;
-    grid-template-columns: repeat(18, 1fr); /* 18 колонок рівних по ширині */
+    grid-template-columns: repeat(18, minmax(20px, 1fr));  /* 18 колонок рівних по ширині */
     width: 100%;
     height: auto;
   }
@@ -52,23 +69,10 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
     align-items: center;
   }
 
-   .panel {
-    width: 95%;                 /* на всю ширину майже */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
-    gap: 4px;                   /* мінімальний відступ */
-    margin-bottom: 10px;
-  }
+
 }
   /* === MOBILE SHOP GRID 3 COLUMNS === */
 @media (max-width: 768px) {
-  .panel {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
-    gap: 8px; /* проміжки між картками */
-    width: 100%;
-    margin-bottom: 10px;
-  }
 
   .shopCard {
     width: 100%; /* кожна картка займає всю долю колонки */
