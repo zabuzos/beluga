@@ -20,6 +20,29 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 
   opacity: 0.9; /* напівпрозорість */
 }
+
+  /* === MOBILE OPTIMIZATION + BONUS SCROLL === */
+#gridWrapper {
+  transform-origin: top center;
+  overflow: auto;        /* для прокрутки на маленьких екранах */
+  max-width: 100vw;
+}
+
+@media (max-width: 768px) {
+  #gridWrapper {
+    transform: scale(0.6);  /* зменшення поля для телефону */
+  }
+
+  body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .panel {
+    width: 90%;
+  }
+}
+  
   .divider {
   border-right: 4px dashed black !important;
 }
@@ -93,7 +116,9 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
     </h3>
   </div>
 
+ <div id="gridWrapper">
   <div id="grid"></div>
+</div>
   <button onclick="endTurn()" class="buyBtn" id="endTurnBtn">Закінчити хід</button>
   <button onclick="resetState()" class="buyBtn" style="margin-top:10px;">Нова гра</button>
 </div>
