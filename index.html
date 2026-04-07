@@ -3,86 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga 3 Multiplayer v2 FIX</title>
+<title>Beluga 3 Multiplayer</title>
 
 <style>
-/* --- ТВОЇ СТИЛІ НЕ ЧІПАВ --- */
 body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
-#grid {display:grid;grid-template-columns: repeat(18, 60px);} 
-.cell {
-  width:60px;
-  height:60px;
+
+#grid {display:grid;grid-template-columns: repeat(18, 60px);}
+
+.cell{
+  width:60px;height:60px;
   border:1px solid rgba(0,0,0,0.1);
   position:relative;
-  background-image: url('img/ground.png');
-  background-size: cover;
-  background-repeat: repeat;
-  opacity: 0.9;
-}
-.panel { width:220px; }
-
-@media (max-width: 768px) {
-  .panel {
-    width: 95%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  #gridWrapper {overflow:auto;max-width:100vw;margin:0 auto;width:100vw;}
-  #grid {grid-template-columns: repeat(18, 40px);}
-  .cell {width:40px;height:40px;}
-  body {flex-direction: column;align-items: center;}
+  background-image:url('img/ground.png');
+  background-size:cover;
 }
 
-.divider { border-right: 4px dashed black !important; }
+.divider{border-right:4px dashed black;}
 
-.hitFlash {
-  animation: hitFlashAnim 0.2s ease, hitFlashBorder 0.2s ease;
-}
-@keyframes hitFlashAnim {0%{background:rgba(255,0,0,0.7);}100%{background:transparent;}}
-@keyframes hitFlashBorder {0%{outline:3px solid red;}100%{outline:none;}}
+.panel{width:220px;}
 
-.move { background:rgba(0,255,0,0.3); }
-.future { background:rgba(255,255,0,0.3); }
+.move{background:rgba(0,255,0,0.3);}
+.attackBorder{outline:3px solid red;}
+.city{background:gold;}
+.selected{outline:3px solid black;}
 
-.attackBorder { outline:3px solid red; cursor:pointer; }
-.attackBorder:hover {
-  cursor: url('data:image/svg+xml;utf8,\
-  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">\
-  <text y="24" font-size="24">⚔️</text>\
-  </svg>') 0 24, auto;
-}
+.unitImg{width:100%;height:100%;object-fit:contain;}
+.hp{position:absolute;bottom:2px;right:2px;color:white;background:black;font-size:12px;}
+.mp{position:absolute;top:2px;left:2px;background:white;font-size:11px;}
 
-.city { background:gold; }
-.selected { outline:3px solid black; }
+.card{background:white;padding:10px;margin-bottom:10px;border-radius:10px;}
+.buyBtn{width:100%;background:green;color:white;border:none;padding:6px;border-radius:6px;cursor:pointer;}
 
-.unitImg {width:100%;height:100%;object-fit:contain;border-radius:6px;}
-.unitP1 { outline:3px solid #2196F3; }
-.unitP2 { outline:3px solid #f44336; }
+#menu{text-align:center;width:100%;}
+#turnPanel{text-align:center;}
 
-.hp {position:absolute;bottom:2px;right:2px;font-size:12px;color:white;background:rgba(0,0,0,0.6);padding:2px;}
-.mp {position:absolute;top:2px;left:2px;font-size:11px;background:white;padding:1px 3px;border-radius:4px;}
+#logo{max-width:200px;display:block;margin:auto;}
 
-.card {background:white;padding:10px;margin-bottom:12px;border-radius:10px;}
-.shopCard { text-align:center; }
-.shopImg {width:100%;height:110px;object-fit:contain;margin:6px 0;}
-.title {font-weight:bold;margin-bottom:4px;}
-.stats {font-size:14px;margin-bottom:4px;}
-.price {font-weight:bold;margin-bottom:6px;}
-
-.buyBtn {
-  background: linear-gradient(180deg, #4CAF50, #2e7d32);
-  border:none;border-radius:8px;padding:8px;color:white;font-weight:bold;cursor:pointer;width:100%;
-}
-.buyBtn:hover { transform: scale(1.05); }
-.buyBtn:active { transform: scale(0.95); }
-.buyBtn:disabled {background:#999;cursor:not-allowed;}
-
-#menu {width:100%;text-align:center;margin-bottom:10px;}
-#turnPanel {text-align:center;margin-bottom:10px;}
-
-#logo {max-width:230px;display:block;margin:0 auto 10px;}
+.hitFlash{animation:hit 0.2s;}
+@keyframes hit{0%{background:red;}100%{background:transparent;}}
 </style>
 </head>
 
@@ -91,30 +49,27 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 <img src="img/logo.png" id="logo">
 
 <div id="menu">
-  <input type="text" id="roomInput" placeholder="Назва кімнати" />
-  <select id="playerSelect">
-    <option value="1">Гравець 1</option>
-    <option value="2">Гравець 2</option>
-  </select>
-  <button id="joinBtn">Приєднатися</button>
+<input id="roomInput" placeholder="Кімната">
+<select id="playerSelect">
+<option value="1">Гравець 1</option>
+<option value="2">Гравець 2</option>
+</select>
+<button id="joinBtn">Приєднатись</button>
 </div>
 
 <div class="panel" id="leftPanel"></div>
 
 <div>
-  <div id="turnPanel">
-    <h3>
-      Хід: <span id="turn"></span> |
-      Гравець: <span id="player"></span><br>
-      💰 P1: <span id="money1"></span> |
-      P2: <span id="money2"></span>
-    </h3>
-  </div>
+<div id="turnPanel">
+Хід: <span id="turn"></span> |
+Гравець: <span id="player"></span><br>
+💰 <span id="money1"></span> | <span id="money2"></span>
+</div>
 
-  <div id="gridWrapper"><div id="grid"></div></div>
+<div id="grid"></div>
 
-  <button onclick="endTurn()" class="buyBtn">Закінчити хід</button>
-  <button onclick="resetState()" class="buyBtn" style="margin-top:10px;">Нова гра</button>
+<button onclick="endTurn()" class="buyBtn">Закінчити хід</button>
+<button onclick="resetState()" class="buyBtn">Нова гра</button>
 </div>
 
 <div class="panel" id="rightPanel"></div>
@@ -125,149 +80,113 @@ import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/fir
 
 const app = initializeApp({
   apiKey:"AIzaSy...",
-  authDomain:"beluga-a7197.firebaseapp.com",
   databaseURL:"https://beluga-a7197-default-rtdb.firebaseio.com"
 });
-const db = getDatabase(app);
+const db=getDatabase(app);
 
-const width=18, height=10;
-
-let currentPlayer=1;
-let playerId=1;
-let turn=1;
-let selectedUnit=null;
-let buyMode=null;
-let room="";
+let width=18,height=10;
+let currentPlayer=1,playerId=1,turn=1;
+let selectedUnit=null,buyMode=null,room="";
 
 const unitTypes={
- shooter:{name:"Стрілець",speed:1,atk:15,hp:50,range:3,price:50000,img1:"img/shooter_p1.png",img2:"img/shooter_p2.png"},
  infantry:{name:"Піхота",speed:3,atk:20,hp:50,range:1,price:40000,img1:"img/infantry_p1.png",img2:"img/infantry_p2.png"},
- cavalry:{name:"Кавалерія",speed:4,atk:20,hp:55,range:1,price:120000,img1:"img/cavalry_p1.png",img2:"img/cavalry_p2.png"}
 };
 
-let state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]};
+let state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:16,y:4}]};
 
 function createGrid(){
- let g=grid; g.innerHTML='';
+ grid.innerHTML='';
  for(let y=0;y<height;y++){
   for(let x=0;x<width;x++){
    let d=document.createElement('div');
    d.className='cell';
    if(x===8)d.classList.add('divider');
    d.onclick=()=>cellClick(x,y);
-   g.appendChild(d);
+   grid.appendChild(d);
 }}}
 
 function getCell(x,y){return document.querySelectorAll('.cell')[y*width+x];}
 
-function cellClick(x,y){
+function render(){
+ turnEl.innerText=turn;
+ playerEl.innerText=currentPlayer;
+ money1.innerText=state.money[1];
+ money2.innerText=state.money[2];
 
- if(!room){alert("Введи кімнату");return;}
- if(currentPlayer!==playerId) return;
+ document.querySelectorAll('.cell').forEach(c=>{c.innerHTML='';c.classList.remove('move','attackBorder','selected');});
+
+ state.units.forEach(u=>{
+  let cell=getCell(u.x,u.y);
+  let img=document.createElement('img');
+  img.src=u.owner===1?unitTypes[u.type].img1:unitTypes[u.type].img2;
+  img.className='unitImg';
+  cell.appendChild(img);
+ });
+
+ renderPanels();
+}
+
+window.render=render;
+
+function renderPanels(){
+ leftPanel.innerHTML='';
+ rightPanel.innerHTML='';
+ Object.keys(unitTypes).forEach(k=>{
+  let u=unitTypes[k];
+  leftPanel.innerHTML+=`<div class="card">${u.name}<button onclick="startBuy('${k}',1)" class="buyBtn">Купити</button></div>`;
+  rightPanel.innerHTML+=`<div class="card">${u.name}<button onclick="startBuy('${k}',2)" class="buyBtn">Купити</button></div>`;
+ });
+}
+
+window.startBuy=(t,p)=>{if(p===playerId)buyMode=t;}
+
+function cellClick(x,y){
+ if(!room)return;
+ if(currentPlayer!==playerId)return;
 
  let unit=state.units.find(u=>u.x===x&&u.y===y);
 
  if(buyMode){
-  if(unit)return;
   let u=unitTypes[buyMode];
-  if(state.money[playerId]<u.price)return;
-
   state.money[playerId]-=u.price;
   state.units.push({x,y,owner:playerId,type:buyMode,hp:u.hp,movePoints:0,attacked:true});
-  buyMode=null; saveState(); render(); return;
+  buyMode=null;saveState();render();return;
  }
 
- if(unit && unit.owner===playerId){ selectedUnit=unit; render(); return; }
+ if(unit && unit.owner===playerId){selectedUnit=unit;return;}
 
  if(unit && unit.owner!==playerId && selectedUnit && !selectedUnit.attacked){
-  let t=unitTypes[selectedUnit.type];
-  let dx=Math.abs(selectedUnit.x-x),dy=Math.abs(selectedUnit.y-y);
-
-  if(Math.max(dx,dy)<=t.range){
-    attackUnit(selectedUnit,unit);
-    selectedUnit.attacked=true;
-
-    let c=getCell(x,y);
-    c.classList.add('hitFlash');
-    setTimeout(()=>c.classList.remove('hitFlash'),200);
-
-    saveState(); render();
-  }
-  return;
+  unit.hp-=20;
+  selectedUnit.attacked=true;
+  if(unit.hp<=0)state.units=state.units.filter(u=>u!==unit);
+  saveState();render();return;
  }
-
- if(selectedUnit && selectedUnit.owner===playerId && selectedUnit.movePoints>0){
-  if(state.units.some(u=>u.x===x&&u.y===y))return;
-  moveUnit(selectedUnit,x,y);
-  saveState(); render();
- }
-}
-
-function moveUnit(u,x,y){
- let dist=Math.max(Math.abs(u.x-x),Math.abs(u.y-y));
- if(dist<=u.movePoints){u.movePoints-=dist;u.x=x;u.y=y;}
-}
-
-function attackUnit(a,d){
- d.hp-=unitTypes[a.type].atk;
- if(d.hp<=0) state.units=state.units.filter(u=>u!==d);
 }
 
 function endTurn(){
- if(currentPlayer!==playerId) return;
-
+ if(currentPlayer!==playerId)return;
  currentPlayer=currentPlayer===1?2:1;
- if(currentPlayer===1) turn++;
-
- state.money[currentPlayer]+=100000;
- state.units.forEach(u=>{
-  if(u.owner===currentPlayer){
-   u.movePoints=unitTypes[u.type].speed;
-   u.attacked=false;
-  }
- });
-
- selectedUnit=null;
- saveState(); render();
+ saveState();render();
 }
 
-window.startBuy=(t,p)=>{ if(p===playerId) buyMode=t; };
 window.endTurn=endTurn;
-window.resetState=resetState;
 
-function saveState(){ if(room) set(ref(db,'games/'+room),{state,turn,currentPlayer}); }
-function loadState(){ if(!room)return;
- onValue(ref(db,'games/'+room),(s)=>{let d=s.val(); if(!d)return;
- state=d.state;turn=d.turn;currentPlayer=d.currentPlayer; render();
-});}
-
-function resetState(){
- state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]};
- turn=1; currentPlayer=1; saveState(); render();
-}
+function saveState(){if(room)set(ref(db,'games/'+room),{state,turn,currentPlayer});}
 
 joinBtn.onclick=()=>{
- room=roomInput.value.trim();
+ room=roomInput.value;
  playerId=parseInt(playerSelect.value);
- createGrid();
-
- get(ref(db,'games/'+room)).then(s=>{
-  if(!s.exists()) resetState();
-  else{
-    let d=s.val();
-    state=d.state; turn=d.turn; currentPlayer=d.currentPlayer;
-  }
-  render(); loadState();
- });
+ createGrid();render();
 };
 
-const turnEl = document.getElementById('turn');
-const playerEl = document.getElementById('player');
-const money1 = document.getElementById('money1');
-const money2 = document.getElementById('money2');
-  
+const turnEl=document.getElementById('turn');
+const playerEl=document.getElementById('player');
+const money1=document.getElementById('money1');
+const money2=document.getElementById('money2');
+
 createGrid();
 render();
 </script>
+
 </body>
 </html>
