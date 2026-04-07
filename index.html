@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
@@ -123,7 +124,14 @@ body {
 .buyBtn:hover { transform: scale(1.05); }
 .buyBtn:active { transform: scale(0.95); }
 
+.buyBtn:disabled {
+  background: #999;
+  cursor: not-allowed;
+  transform:none;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -255,18 +263,19 @@ function render(){
   renderPanels();
 }
 
-// --- SHOP ---
+// --- SHOP (ВИПРАВЛЕНО) ---
 function renderPanels(){
-  let html='';
 
+  // P1
+  let html1='';
   Object.keys(unitTypes).forEach(k=>{
     let u=unitTypes[k];
 
-    html+=`
+    html1+=`
     <div class='card shopCard'>
       <div class="title">${u.name}</div>
 
-      <img src="${currentPlayer===1 ? u.img1 : u.img2}" class="shopImg">
+      <img src="${u.img1}" class="shopImg">
 
       <div class="stats">
         🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}
@@ -274,15 +283,49 @@ function renderPanels(){
 
       <div class="price">💰 ${fm(u.price)}</div>
 
-      <button class="buyBtn" onclick="startBuy('${k}')">Купити</button>
+      <button class="buyBtn"
+        onclick="startBuy('${k}',1)"
+        ${currentPlayer!==1 ? 'disabled' : ''}>
+        Купити
+      </button>
     </div>`;
   });
 
-  leftPanel.innerHTML=html;
-  rightPanel.innerHTML=html;
+  // P2
+  let html2='';
+  Object.keys(unitTypes).forEach(k=>{
+    let u=unitTypes[k];
+
+    html2+=`
+    <div class='card shopCard'>
+      <div class="title">${u.name}</div>
+
+      <img src="${u.img2}" class="shopImg">
+
+      <div class="stats">
+        🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}
+      </div>
+
+      <div class="price">💰 ${fm(u.price)}</div>
+
+      <button class="buyBtn"
+        onclick="startBuy('${k}',2)"
+        ${currentPlayer!==2 ? 'disabled' : ''}>
+        Купити
+      </button>
+    </div>`;
+  });
+
+  leftPanel.innerHTML = html1;
+  rightPanel.innerHTML = html2;
 }
 
-function startBuy(type){ buyMode=type; }
+// --- BUY (ВИПРАВЛЕНО) ---
+function startBuy(type, player){
+  if(player !== currentPlayer) return;
+  buyMode = type;
+}
+
 function isOwnSide(x){ return currentPlayer===1?x<9:x>=9; }
 
 // --- CLICK ---
