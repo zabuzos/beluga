@@ -166,6 +166,14 @@ function renderPanels(){
 }
 
 // ===== FIXED BUY LOGIC =====
+// ВАЖЛИВО: робимо функції глобальними для onclick
+window.startBuy = function(type, player){
+  if(player !== playerId) return;
+  buyMode = type;
+};
+
+window.endTurn = endTurn;
+window.resetState = resetState;
 function startBuy(type, player){
   if(player !== playerId) return; // тепер перевірка хто ти
   buyMode = type;
