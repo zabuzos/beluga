@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga 3 Multiplayer v2</title>
+<title>Beluga 3 Multiplayer v3</title>
 <style>
 body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
 #grid {display:grid;grid-template-columns: repeat(18, 60px);} 
@@ -20,6 +20,9 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 .price {font-weight:bold;margin-bottom:6px;}
 #menu {width:100%; text-align:center; margin-bottom:10px;}
 #turnPanel {text-align:center;margin-bottom:10px;}
+
+.unitEditor input {margin:2px 0; width:90%;}
+.unitEditor button {margin-top:4px;}
 
 @media (max-width:768px){
   .panel {width:95%; display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-bottom:10px;}
@@ -69,7 +72,7 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
   <button class="buyBtn" id="resetBtn">Нова гра</button>
 
   <!-- Вкладка Юніти для створення комплектів -->
-  <div style="margin-top:10px; max-width:500px;">
+  <div style="margin-top:20px; max-width:500px;">
     <h3>Створення комплектів юнітів</h3>
     <input type="text" id="newSetName" placeholder="Назва комплекту" />
     <button id="createSetBtn" class="buyBtn">Створити комплект</button>
@@ -96,102 +99,81 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const width = 18;
-const height = 10;
-
-let currentPlayer = 1;
-let playerId = 1;
-let turn = 1;
-let selectedUnit = null;
-let buyMode = null;
-let room = "";
-
-const unitTypes = {
+const width=18,height=10;
+let currentPlayer=1,playerId=1,turn=1,selectedUnit=null,buyMode=null,room="";
+const unitTypes={
   shooter:{name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000,img1:"img/shooter_p1.png",img2:"img/shooter_p2.png"},
   infantry:{name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000,img1:"img/infantry_p1.png",img2:"img/infantry_p2.png"},
   cavalry:{name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000,img1:"img/cavalry_p1.png",img2:"img/cavalry_p2.png"}
 };
+let state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]};
+let unitSets={default:Object.keys(unitTypes)};
 
-let state = { units:[], money:{1:500000,2:500000}, cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}] };
-let unitSets = { default: Object.keys(unitTypes) };
+function fm(n){return (n/1000)+'к';}
 
-function fm(n){ return (n/1000)+'к'; }
+function createGrid(){let g=document.getElementById('grid'); g.innerHTML='';for(let y=0;y<height;y++){for(let x=0;x<width;x++){let d=document.createElement('div');d.className='cell';d.dataset.x=x;d.dataset.y=y;g.appendChild(d);}}}
 
-function createGrid(){
-  let g=document.getElementById('grid'); g.innerHTML='';
-  for(let y=0;y<height;y++){
-    for(let x=0;x<width;x++){
-      let d=document.createElement('div');
-      d.className='cell';
-      d.dataset.x=x; d.dataset.y=y;
-      g.appendChild(d);
-    }
-  }
-}
-
-function render(){
-  document.getElementById('turn').innerText=turn;
-  document.getElementById('player').innerText=currentPlayer;
-  document.getElementById('money1').innerText=fm(state.money[1]);
-  document.getElementById('money2').innerText=fm(state.money[2]);
-  renderPanels();
-}
+function render(){document.getElementById('turn').innerText=turn;document.getElementById('player').innerText=currentPlayer;
+document.getElementById('money1').innerText=fm(state.money[1]);document.getElementById('money2').innerText=fm(state.money[2]);renderPanels();}
 
 function renderPanels(){
   let html1='', html2='';
   Object.keys(unitTypes).forEach(k=>{
-    let u = unitTypes[k];
-    html1+=`<div class='shopCard'><div class="title">${u.name}</div>
-      <img src="${u.img1}" class="shopImg">
-      <div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
-      <div class="price">💰 ${fm(u.price)}</div>
-      <button class="buyBtn" onclick="startBuy('${k}',1)" ${currentPlayer!==1?'disabled':''}>Купити</button></div>`;
-    html2+=`<div class='shopCard'><div class="title">${u.name}</div>
-      <img src="${u.img2}" class="shopImg">
-      <div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
-      <div class="price">💰 ${fm(u.price)}</div>
-      <button class="buyBtn" onclick="startBuy('${k}',2)" ${currentPlayer!==2?'disabled':''}>Купити</button></div>`;
+    let u=unitTypes[k];
+    html1+=`<div class='shopCard'><div class="title">${u.name}</div><img src="${u.img1}" class="shopImg"><div class="stats">🏃${u.speed} ⚔️${u.atk} ❤️${u.hp} 🎯${u.range}</div><div class="price">💰${fm(u.price)}</div><button class="buyBtn" onclick="startBuy('${k}',1)" ${currentPlayer!==1?'disabled':''}>Купити</button></div>`;
+    html2+=`<div class='shopCard'><div class="title">${u.name}</div><img src="${u.img2}" class="shopImg"><div class="stats">🏃${u.speed} ⚔️${u.atk} ❤️${u.hp} 🎯${u.range}</div><div class="price">💰${fm(u.price)}</div><button class="buyBtn" onclick="startBuy('${k}',2)" ${currentPlayer!==2?'disabled':''}>Купити</button></div>`;
   });
   document.getElementById('leftPanel').innerHTML=html1;
   document.getElementById('rightPanel').innerHTML=html2;
 }
 
-window.startBuy = function(type, player){
-  if(player !== playerId) return;
-  buyMode = type;
+window.startBuy=function(type,player){if(player!==playerId) return;buyMode=type;}
+window.resetState=function(){state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]};turn=1;currentPlayer=1;render();}
+
+document.getElementById('resetBtn').onclick=window.resetState;
+document.getElementById('endTurnBtn').onclick=()=>{currentPlayer=currentPlayer===1?2:1;if(currentPlayer===1) turn++;state.money[currentPlayer]+=100000;render();}
+document.getElementById('joinBtn').onclick=()=>{
+  room=document.getElementById('roomInput').value.trim();playerId=parseInt(document.getElementById('playerSelect').value);
+  createGrid(); render();
 };
 
-window.resetState = function(){
-  state={ units:[], money:{1:500000,2:500000}, cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}] };
-  turn=1; currentPlayer=1; render();
-};
-
-document.getElementById('resetBtn').onclick = window.resetState;
-document.getElementById('endTurnBtn').onclick = function(){
-  currentPlayer = currentPlayer===1?2:1;
-  if(currentPlayer===1) turn++;
-  state.money[currentPlayer]+=100000;
-  render();
-};
-
-document.getElementById('joinBtn').onclick = ()=>{
-  room = document.getElementById('roomInput').value.trim();
-  playerId = parseInt(document.getElementById('playerSelect').value);
-  createGrid();
-  render();
-};
-
-document.getElementById('createSetBtn').onclick = ()=>{
-  const name=document.getElementById('newSetName').value.trim();
-  if(!name){ alert("Введіть назву комплекту"); return; }
-  if(unitSets[name]){ alert("Такий комплект вже існує"); return; }
+// --- Створення комплектів ---
+document.getElementById('createSetBtn').onclick=()=>{
+  const name=document.getElementById('newSetName').value.trim();if(!name){alert("Введіть назву комплекту");return;}
+  if(unitSets[name]){alert("Такий комплект вже існує");return;}
   unitSets[name]=[];
   document.getElementById('unitSetSelect').appendChild(new Option(name,name));
-  document.getElementById('unitSetEditor').innerHTML=`<h4>Редагування комплекту: ${name}</h4>`;
-};
+  showUnitEditor(name);
+}
 
-createGrid();
-render();
+function showUnitEditor(setName){
+  const editor=document.getElementById('unitSetEditor'); editor.innerHTML=`<h4>Редагування комплекту: ${setName}</h4>`;
+  editor.innerHTML+=`<div class="unitEditor">
+    Назва: <input type="text" id="unitName" /><br>
+    🏃: <input type="number" id="unitSpeed" value="1" /><br>
+    ⚔️: <input type="number" id="unitAtk" value="10" /><br>
+    ❤️: <input type="number" id="unitHp" value="50" /><br>
+    🎯: <input type="number" id="unitRange" value="1" /><br>
+    💰: <input type="number" id="unitPrice" value="10000" /><br>
+    Картинка: <input type="text" id="unitImg" placeholder="img/unit.png" /><br>
+    <button id="addUnitBtn" class="buyBtn">Додати юніта</button>
+  </div>`;
+  document.getElementById('addUnitBtn').onclick=()=>{
+    const u={name:document.getElementById('unitName').value,
+      speed:parseInt(document.getElementById('unitSpeed').value),
+      atk:parseInt(document.getElementById('unitAtk').value),
+      hp:parseInt(document.getElementById('unitHp').value),
+      range:parseInt(document.getElementById('unitRange').value),
+      price:parseInt(document.getElementById('unitPrice').value),
+      img:document.getElementById('unitImg').value
+    };
+    if(!u.name){alert("Введіть назву юніта"); return;}
+    unitSets[setName].push(u);
+    showUnitEditor(setName);
+  }
+}
+
+createGrid(); render();
 </script>
 </body>
 </html>
