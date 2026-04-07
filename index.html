@@ -228,8 +228,19 @@ function render(){
   });
 
   state.cities.forEach(c=>{
-    getCell(c.x,c.y).classList.add('city');
-  });
+  let cell = getCell(c.x,c.y);
+  cell.classList.add('city');
+
+  let icon = document.createElement('div');
+  icon.innerText = "🏰";
+  icon.style.position = "absolute";
+  icon.style.top = "50%";
+  icon.style.left = "50%";
+  icon.style.transform = "translate(-50%, -50%)";
+  icon.style.fontSize = "26px";
+
+  cell.appendChild(icon);
+});
 
   state.units.forEach(u=>{
     let cell=getCell(u.x,u.y);
