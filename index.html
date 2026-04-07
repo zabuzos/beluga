@@ -297,29 +297,57 @@ function startBuy(type, player){
 function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
 function cellClick(x,y){
-   // ❗ ГОЛОВНИЙ ФІКС
+
+  // ❗ блокуємо якщо не твій хід
   if(currentPlayer !== playerId) return;
 
-  let unit=state.units.find(u=>u.x===x&&u.y===y);
-// дозволяємо грати локально навіть без кімнати
-
-  let unit=state.units.find(u=>u.x===x&&u.y===y);
+  let unit = state.units.find(u=>u.x===x&&u.y===y);
 
   if(buyMode){
-    if(currentPlayer !== playerId) return; // не твій хід
     if(unit || !isOwnSide(x)) return;
 
-    let u=unitTypes[buyMode];
-    if(state.money[playerId]<u.price) return;
+    let u = unitTypes[buyMode];
+    if(state.money[playerId] < u.price) return;
 
-    state.money[playerId]-=u.price;
-    state.units.push({x,y,owner:playerId,type:buyMode,hp:u.hp,movePoints:0,attacked:true});
+    state.money[playerId] -= u.price;
+    state.units.push({
+      x,y,
+      owner:playerId,
+      type:buyMode,
+      hp:u.hp,
+      movePoints:0,
+      attacked:true
+    });
 
-    buyMode=null;
+    buyMode = null;
     saveState();
     render();
     return;
   }
+
+  // ✅ вибір тільки своїх юнітів
+  if(unit && unit.owner === playerId){
+    selectedUnit = unit;
+    render();
+    return;
+  }
+
+  // ✅ атака тільки ворога
+  if(unit && unit.owner !== playerId && selectedUnit && !selectedUnit.attacked){
+    attackUnit(selectedUnit, unit);
+    saveState();
+    render();
+    return;
+  }
+
+  // рух
+  if(selectedUnit && selectedUnit.movePoints > 0){
+    if(state.units.some(u=>u.x===x && u.y===y)) return;
+    moveUnit(selectedUnit, x, y);
+    saveState();
+    render();
+  }
+}
 
   if(unit && unit.owner===playerId){ selectedUnit=unit; render(); return; }
   if(unit && unit.owner!==playerId && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
