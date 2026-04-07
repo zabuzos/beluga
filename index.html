@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga 3 Multiplayer v2 FIX</title>
+<title>Beluga 3 Multiplayer v2 </title>
 
 <style>
 body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
@@ -349,9 +349,7 @@ function cellClick(x,y){
   }
 }
 
-  if(unit && unit.owner===playerId){ selectedUnit=unit; render(); return; }
-  if(unit && unit.owner!==playerId && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
-  if(selectedUnit && selectedUnit.movePoints>0){ if(state.units.some(u=>u.x===x&&u.y===y)) return; moveUnit(selectedUnit,x,y); saveState(); render(); }
+
 }
 
 function moveUnit(u,x,y){
