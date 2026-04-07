@@ -53,16 +53,12 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
   width: 95%}
 
 
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(18, minmax(20px, 1fr));  /* 18 колонок рівних по ширині */
-    width: 100%;
-    height: auto;
+ #grid {
+    grid-template-columns: repeat(18, 40px); /* менші клітинки на телефоні */
   }
-
   .cell {
-    width: 100%;    /* клітинка займає всю долю колонки */
-    aspect-ratio: 1; /* квадратна клітинка */
+    width: 40px;
+    height: 40px;  /* квадратні */
   }
 
   body {
