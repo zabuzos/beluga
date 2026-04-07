@@ -126,20 +126,28 @@
         <button class="btn" id="joinBtn">УВІЙТИ В БИТВУ</button>
     </div>
 
-    <div id="gameArea" style="display: none;">
-        <div style="display: flex; justify-content: center; gap: 20px;">
-            <div class="panel" id="leftPanel"></div>
-            <div>
-                <div style="background: #34495e; padding: 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
-                    <span>Хід: <b id="turn">1</b> | Гравець: <b id="playerDisplay">1</b></span>
-                    <span>💰 <b id="myMoney">0</b>к</span>
-                    <button onclick="window.endTurn()" style="background: #e67e22; border: none; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Завершити хід</button>
-                </div>
-                <div id="gridWrapper"><div id="grid"></div></div>
+  <div id="gameArea" style="display: none;">
+    <div class="container">
+        
+        <div class="panel" id="leftPanel"></div>
+
+        <div class="main-game-block">
+            <div id="turnPanel" style="background: #34495e; color: white; padding: 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span>Хід: <b id="turn">1</b> | P<b id="playerDisplay">1</b></span>
+                <span>💰 <b id="myMoney">0</b>к</span>
+                <button onclick="window.endTurn()" style="background: #e67e22; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">ОК</button>
             </div>
-            <div class="panel" id="rightPanel"></div>
+            
+            <div id="gridWrapper">
+                <div id="grid"></div>
+            </div>
         </div>
+
+        <div class="panel" id="rightPanel"></div>
+        
     </div>
+</div>
+
 </div>
 
 <div id="army-tab" class="tab-content">
