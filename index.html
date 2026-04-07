@@ -56,6 +56,33 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
     width: 90%;
   }
 }
+  /* === MOBILE SHOP GRID 3 COLUMNS === */
+@media (max-width: 768px) {
+  .panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
+    gap: 8px; /* проміжки між картками */
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .shopCard {
+    width: 100%; /* кожна картка займає всю долю колонки */
+    margin: 0;
+  }
+
+  .shopImg {
+    height: 80px; /* трохи менше для мобільних */
+  }
+
+  .title, .stats, .price, .buyBtn {
+    font-size: 12px; /* зменшимо шрифт на мобільному */
+  }
+
+  .buyBtn {
+    padding: 6px;
+  }
+}
   
   .divider {
   border-right: 4px dashed black !important;
