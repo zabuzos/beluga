@@ -111,9 +111,9 @@ const db = getDatabase(app);
 const INITIAL_ARMY = {
     name: "Стандартна (GitHub)",
     units: {
-        u1: { name: "Піхота", speed: 3, atk: 20, hp: 50, range: 1, price: 40000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit1.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit1.png" },
-        u2: { name: "Лучник", speed: 2, atk: 15, hp: 40, range: 3, price: 60000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit2.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit2.png" },
-        u3: { name: "Лицар", speed: 5, atk: 25, hp: 70, range: 1, price: 120000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit3.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit3.png" }
+        u1: { name: "Піхота", speed: 3, atk: 20, hp: 50, range: 1, price: 40000, img1: "img/p1_unit1.png", img2: "img/p2_unit1.png" },
+        u2: { name: "Лучник", speed: 2, atk: 15, hp: 40, range: 3, price: 60000, img1: "img/p1_unit2.png", img2: "img/p2_unit2.png" },
+        u3: { name: "Лицар", speed: 5, atk: 25, hp: 70, range: 1, price: 120000, img1: "img/p1_unit3.png", img2: "img/p2_unit3.png" }
     }
 };
 
@@ -315,19 +315,36 @@ function renderShop() {
     const draw = (p) => {
         const target = p === 1 ? 'leftPanel' : 'rightPanel';
         const config = state.playerConfigs[p];
-        if(!config) { document.getElementById(target).innerHTML = `<p>Очікування Гравця ${p}...</p>`; return; }
-        let html = `<h3>P${p}: ${config.name}</h3>`;
+        if(!config) { 
+            document.getElementById(target).innerHTML = `<p style="font-size:12px; opacity:0.7;">Очікування Гравця ${p}...</p>`; 
+            return; 
+        }
+        
+        let html = `<h3 style="margin:5px 0;">P${p}: ${config.name}</h3>`;
+        
         Object.keys(config.units).forEach(k => {
             const u = config.units[k];
-            html += `<div class="card">
-                <b>${u.name}</b><br>
-                <img src="${p===1?u.img1:u.img2}" class="shopImg"><br>
-                <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p || currentPlayer!==p ? 'disabled' : ''}>${u.price/1000}k</button>
-            </div>`;
+            html += `
+                <div class="card">
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">${u.name}</div>
+                    <img src="${p===1 ? u.img1 : u.img2}" class="shopImg">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; font-size: 11px; margin: 5px 0; background: #dfe6e9; border-radius: 4px; padding: 3px;">
+                        <span>❤️ ${u.hp}</span>
+                        <span>⚔️ ${u.atk}</span>
+                        <span>👟 ${u.speed}</span>
+                        <span>🎯 ${u.range}</span>
+                    </div>
+                    
+                    <button class="btn" onclick="window.setBuy('${k}')" ${playerId !== p || currentPlayer !== p ? 'disabled' : ''}>
+                        🛒 ${u.price/1000}k
+                    </button>
+                </div>`;
         });
         document.getElementById(target).innerHTML = html;
     };
-    draw(1); draw(2);
+    draw(1); 
+    draw(2);
 }
 
 window.setBuy = (k) => { buyMode = k; };
