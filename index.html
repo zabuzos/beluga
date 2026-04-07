@@ -32,11 +32,29 @@
     .hp { position: absolute; bottom: 2px; right: 2px; font-size: 11px; color: white; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 3px; }
     .mp { position: absolute; top: 2px; left: 2px; font-size: 10px; background: white; padding: 1px 3px; border-radius: 4px; border: 1px solid #999; }
 
-    /* РЕДАКТОР */
+    /* === ОНОВЛЕНИЙ РЕДАКТОР === */
     .editor-set { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .unit-entry { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 40px; gap: 8px; background: #fdfdfd; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; align-items: center; }
-    .unit-entry input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-    .delete-btn { cursor: pointer; font-size: 18px; border: none; background: none; color: #ff5252; transition: 0.2s; }
+    
+    .unit-entry { background: #fdfdfd; padding: 15px; margin-top: 10px; border-radius: 10px; border: 1px solid #eee; display: flex; flex-direction: column; gap: 10px;}
+    
+    /* Рядок зі статами */
+    .unit-main-stats { display: grid; grid-template-columns: 2fr repeat(5, 1fr) 40px; gap: 8px; align-items: center; }
+    .unit-main-stats input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box;}
+
+    /* Блок редагування картинок */
+    .unit-images-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-top: 1px solid #eee; padding-top: 10px; }
+    .img-edit-group { display: flex; align-items: center; gap: 10px; background: #f5f5f5; padding: 8px; border-radius: 8px; }
+    
+    .editor-img-preview { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: #eee; border: 1px solid #ccc; }
+    .img-controls { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+    .img-controls input[type="text"] { font-size: 11px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box;}
+    
+    /* Стилізація кнопки завантаження */
+    .upload-label { background: #607D8B; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; text-align: center; display: inline-block; transition: 0.2s;}
+    .upload-label:hover { background: #455A64; }
+    .upload-label input[type="file"] { display: none; } /* Ховаємо стандартний інпут */
+
+    .delete-btn { cursor: pointer; font-size: 18px; border: none; background: none; color: #ff5252; transition: 0.2s; text-align: center;}
     .delete-btn:hover { transform: scale(1.2); }
     
     .buyBtn { background: linear-gradient(180deg, #4CAF50, #2e7d32); border: none; border-radius: 8px; padding: 10px; color: white; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
@@ -98,6 +116,9 @@
             <h2>🛠️ Налаштування військ</h2>
             <button class="buyBtn" onclick="window.addNewSet()" style="width: auto;">+ Новий комплект</button>
         </div>
+        <p style="font-size: 12px; color: #666; background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffeeba;">
+            💡 <b>Порада щодо картинок:</b> Ви можете вставити посилання (URL) на картинку з інтернету АБО натиснути кнопку 📁, щоб завантажити файл з комп'ютера. Намагайтеся завантажувати <b>маленькі</b> файли (до 50кб, формат .png або .jpg з прозорістю), щоб не переповнити базу даних гри.
+        </p>
         <hr>
         <div id="setsContainer"></div>
     </div>
@@ -169,6 +190,7 @@ window.deleteSet = (idx) => {
 
 window.addUnitToSet = (setIdx) => {
     const id = "u" + Date.now();
+    // Стандартні картинки, якщо нічого не завантажено
     unitSets[setIdx].units[id] = {name:"Воїн", speed:1, atk:10, hp:50, range:1, price:20000, img1:"img/infantry_p1.png", img2:"img/infantry_p2.png"};
     renderEditor();
 };
@@ -181,6 +203,32 @@ window.deleteUnit = (setIdx, key) => {
 window.updateUnit = (setIdx, key, field, val) => {
     const isNumeric = ['speed', 'atk', 'hp', 'range', 'price'].includes(field);
     unitSets[setIdx].units[key][field] = isNumeric ? parseInt(val) || 0 : val;
+    // Якщо оновили URL картинки, перемалюємо редактор, щоб побачити прев'ю
+    if(field.includes('img')) renderEditor();
+};
+
+// === НОВА ФУНКЦІЯ: ОБРОБКА ЗАВАНТАЖЕННЯ ФАЙЛУ (Base64) ===
+window.uploadImage = (input, setIdx, key, field) => {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Перевірка розміру (наприклад, макс 100кб), щоб не вбили базу
+    if (file.size > 102400) {
+        alert("Файл занадто великий! Будь ласка, використовуйте картинки до 100кб.");
+        input.value = ''; // скидаємо вибір
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        // e.target.result містить дані файлу у форматі Base64 рядока
+        const base64String = e.target.result;
+        // Зберігаємо цей рядок як шлях до картинки
+        unitSets[setIdx].units[key][field] = base64String;
+        renderEditor(); // Оновлюємо редактор, щоб показати картинку
+    };
+    reader.onerror = () => alert("Помилка при читанні файлу");
+    reader.readAsDataURL(file); // Запускаємо читання
 };
 
 window.activateSet = (idx) => {
@@ -243,6 +291,7 @@ function cellClick(x, y) {
     // Купівля
     if(buyMode) {
         const info = currentUnitsInfo[buyMode];
+        if(!info) {buyMode = null; return;} // Сет змінився під час вибору
         const isOwnSide = (playerId === 1) ? x < 9 : x >= 9;
         if(!unitAtCell && isOwnSide && state.money[playerId] >= info.price) {
             state.money[playerId] -= info.price;
@@ -264,6 +313,7 @@ function cellClick(x, y) {
     // Атака
     if(unitAtCell && unitAtCell.owner !== playerId && selectedUnit && !selectedUnit.attacked) {
         const info = currentUnitsInfo[selectedUnit.type];
+        if(!info) return; // Захист
         const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
         if(dist <= info.range) {
             unitAtCell.hp -= info.atk;
@@ -286,6 +336,13 @@ function cellClick(x, y) {
 }
 
 function render() {
+    // Перевірка на випадок, якщо активний сет видалили в редакторі
+    if(!unitSets[activeSetIndex]) activeSetIndex = 0;
+    if(unitSets.length === 0) {
+        document.getElementById('leftPanel').innerHTML = 'Створіть набір юнітів!';
+        return;
+    }
+
     const info = unitSets[activeSetIndex].units;
     document.getElementById('turn').innerText = turn;
     document.getElementById('player').innerText = currentPlayer;
@@ -297,11 +354,16 @@ function render() {
         c.innerHTML = ''; c.classList.remove('move','future','attackBorder','selected','city');
     });
 
-    state.cities.forEach(c => document.querySelector(`.cell[data-x='${c.x}'][data-y='${c.y}']`).classList.add('city'));
+    state.cities.forEach(c => {
+        const cell = document.querySelector(`.cell[data-x='${c.x}'][data-y='${c.y}']`);
+        if(cell) cell.classList.add('city');
+    });
 
     state.units.forEach(u => {
         const cell = document.querySelector(`.cell[data-x='${u.x}'][data-y='${u.y}']`);
-        const typeData = info[u.type] || {img1:'', img2:''};
+        if(!cell) return; // Поза полем (безпека)
+        const typeData = info[u.type] || {img1:'', img2:'', hp:0};
+        
         const img = document.createElement('img');
         img.src = u.owner === 1 ? typeData.img1 : typeData.img2;
         img.className = 'unitImg ' + (u.owner === 1 ? 'unitP1' : 'unitP2');
@@ -312,12 +374,16 @@ function render() {
         if(u === selectedUnit) cell.classList.add('selected');
     });
 
-    if(selectedUnit && !selectedUnit.attacked) {
+    // Хайлайт атаки
+    if(selectedUnit && !selectedUnit.attacked && info[selectedUnit.type]) {
         const range = info[selectedUnit.type].range;
         state.units.forEach(enemy => {
             if(enemy.owner !== playerId) {
                 const d = Math.max(Math.abs(enemy.x - selectedUnit.x), Math.abs(enemy.y - selectedUnit.y));
-                if(d <= range) document.querySelector(`.cell[data-x='${enemy.x}'][data-y='${enemy.y}']`).classList.add('attackBorder');
+                if(d <= range) {
+                    const c = document.querySelector(`.cell[data-x='${enemy.x}'][data-y='${enemy.y}']`);
+                    if(c) c.classList.add('attackBorder');
+                }
             }
         });
     }
@@ -325,13 +391,14 @@ function render() {
 }
 
 function renderPanels() {
+    if(unitSets.length === 0 || !unitSets[activeSetIndex]) return;
     const info = unitSets[activeSetIndex].units;
     let h1 = '', h2 = '';
     Object.keys(info).forEach(key => {
         const u = info[key];
         const card = (p) => `<div class='card'>
             <b>${u.name}</b><br><img src="${p===1?u.img1:u.img2}" class="shopImg">
-            <div style="font-size:12px">⚔️${u.atk} ❤️${u.hp} 🎯${u.range}</div>
+            <div style="font-size:12px">⚔️${u.atk} ❤️${u.hp} 🎯${u.range}🏃${u.speed}</div>
             <b>${(u.price/1000).toFixed(0)}к</b><br>
             <button class="buyBtn" onclick="window.startBuy('${key}', ${p})" ${(currentPlayer!==p || playerId!==p)?'disabled':''}>Купити</button>
         </div>`;
@@ -341,32 +408,69 @@ function renderPanels() {
     document.getElementById('rightPanel').innerHTML = h2;
 }
 
+// === ОНОВЛЕНИЙ RENDER EDITOR (З КАРТИНКАМИ) ===
 function renderEditor() {
     const container = document.getElementById('setsContainer');
     container.innerHTML = unitSets.map((set, sIdx) => `
         <div class="editor-set">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>📦 Набір: ${set.name} ${sIdx === activeSetIndex ? '(Активний)' : ''}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                <h3 style="margin:0;">📦 Набір: ${set.name} ${sIdx === activeSetIndex ? '<span style="color:#4CAF50">(Активний)</span>' : ''}</h3>
                 <div>
-                    <button class="buyBtn" style="width:auto; background:#2196F3; margin-right:5px;" onclick="window.activateSet(${sIdx})">Активувати</button>
+                    <button class="buyBtn" style="width:auto; background:#2196F3; margin-right:5px; padding: 6px 12px; font-size:13px;" onclick="window.activateSet(${sIdx})">Активувати для гри</button>
                     <button class="delete-btn" onclick="window.deleteSet(${sIdx})">🗑️</button>
                 </div>
             </div>
-            ${Object.keys(set.units).map(key => {
-                const u = set.units[key];
-                return `
-                    <div class="unit-entry">
-                        <input type="text" value="${u.name}" onchange="window.updateUnit(${sIdx},'${key}','name',this.value)" placeholder="Назва">
-                        <input type="number" value="${u.speed}" onchange="window.updateUnit(${sIdx},'${key}','speed',this.value)" title="Швидкість">
-                        <input type="number" value="${u.atk}" onchange="window.updateUnit(${sIdx},'${key}','atk',this.value)" title="Атака">
-                        <input type="number" value="${u.hp}" onchange="window.updateUnit(${sIdx},'${key}','hp',this.value)" title="HP">
-                        <input type="number" value="${u.range}" onchange="window.updateUnit(${sIdx},'${key}','range',this.value)" title="Дальність">
-                        <input type="number" value="${u.price}" onchange="window.updateUnit(${sIdx},'${key}','price',this.value)" title="Ціна">
-                        <button class="delete-btn" onclick="window.deleteUnit(${sIdx},'${key}')">🗑️</button>
-                    </div>
-                `;
-            }).join('')}
-            <button class="buyBtn" style="margin-top:10px; background:#666;" onclick="window.addUnitToSet(${sIdx})">+ Додати юніта</button>
+            
+            <div class="units-list">
+                ${Object.keys(set.units).map(key => {
+                    const u = set.units[key];
+                    return `
+                        <div class="unit-entry">
+                            <div class="unit-main-stats">
+                                <input type="text" value="${u.name}" onchange="window.updateUnit(${sIdx},'${key}','name',this.value)" placeholder="Назва">
+                                <input type="number" value="${u.speed}" onchange="window.updateUnit(${sIdx},'${key}','speed',this.value)" title="Швидкість🏃">
+                                <input type="number" value="${u.atk}" onchange="window.updateUnit(${sIdx},'${key}','atk',this.value)" title="Атака⚔️">
+                                <input type="number" value="${u.hp}" onchange="window.updateUnit(${sIdx},'${key}','hp',this.value)" title="HP❤️">
+                                <input type="number" value="${u.range}" onchange="window.updateUnit(${sIdx},'${key}','range',this.value)" title="Дальність🎯">
+                                <input type="number" value="${u.price}" onchange="window.updateUnit(${sIdx},'${key}','price',this.value)" title="Ціна💰">
+                                <button class="delete-btn" onclick="window.deleteUnit(${sIdx},'${key}')" title="Видалити юніта">🗑️</button>
+                            </div>
+                            
+                            <div class="unit-images-edit">
+                                <div class="img-edit-group" style="border-left: 3px solid #2196F3;">
+                                    <img src="${u.img1}" class="editor-img-preview" alt="P1">
+                                    <div class="img-controls">
+                                        <input type="text" value="${u.img1.startsWith('data:') ? '[Завантажений файл]' : u.img1}" 
+                                            onchange="window.updateUnit(${sIdx},'${key}','img1',this.value)" 
+                                            placeholder="URL картинки P1">
+                                        
+                                        <label class="upload-label">
+                                            📁 Завантажити файл
+                                            <input type="file" accept="image/*" onchange="window.uploadImage(this, ${sIdx}, '${key}', 'img1')">
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="img-edit-group" style="border-left: 3px solid #f44336;">
+                                    <img src="${u.img2}" class="editor-img-preview" alt="P2">
+                                    <div class="img-controls">
+                                        <input type="text" value="${u.img2.startsWith('data:') ? '[Завантажений файл]' : u.img2}" 
+                                            onchange="window.updateUnit(${sIdx},'${key}','img2',this.value)" 
+                                            placeholder="URL картинки P2">
+                                            
+                                        <label class="upload-label" style="background:#9E9E9E">
+                                            📁 Завантажити файл
+                                            <input type="file" accept="image/*" onchange="window.uploadImage(this, ${sIdx}, '${key}', 'img2')">
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <button class="buyBtn" style="margin-top:15px; background:#666; padding: 8px;" onclick="window.addUnitToSet(${sIdx})">+ Додати юніта в цей набір</button>
         </div>
     `).join('');
 }
@@ -392,13 +496,13 @@ document.getElementById('joinBtn').onclick = () => {
     get(ref(db, 'games/' + room)).then(snap => {
         if(!snap.exists()) saveState();
         loadState();
+        createGrid(); // Створити сітку після входу
     });
 };
 
 // Початкова ініціалізація
-createGrid();
 renderEditor();
-render();
+render(); // Намалює пустий магазин
 
 </script>
 </body>
