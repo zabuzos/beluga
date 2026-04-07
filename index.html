@@ -3,38 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga 3 - Custom Teams Edition</title>
+<title>Beluga 3 - Battle Ground</title>
 <style>
     body { font-family: 'Segoe UI', sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
     .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
     
     /* ТАБИ */
     .nav-tabs { width: 100%; display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
-    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: #ccc; border-radius: 8px; font-weight: bold; }
+    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: #ccc; border-radius: 8px; font-weight: bold; transition: 0.3s; }
     .tab-btn.active { background: #2196F3; color: white; }
     .tab-content { display: none; width: 100%; }
     .tab-content.active { display: block; }
 
     /* МЕНЮ */
-    #menu { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; display: inline-block; }
-    .menu-row { margin: 10px 0; display: flex; gap: 10px; align-items: center; justify-content: center; }
-    input, select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+    #menu { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; display: inline-block; text-align: center; }
+    .menu-row { margin: 12px 0; display: flex; gap: 10px; align-items: center; justify-content: center; }
+    input, select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
 
-    /* ГРА */
-    #gridWrapper { overflow: auto; border: 2px solid #333; border-radius: 8px; background: #fff; }
+    /* ГРАФІКА ПОЛЯ */
+    #gridWrapper { overflow: auto; border: 3px solid #333; border-radius: 10px; background: #2e7d32; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     #grid { display: grid; grid-template-columns: repeat(18, 60px); } 
-    .cell { width: 60px; height: 60px; border: 1px solid rgba(0,0,0,0.05); position: relative; background-image: url('https://img.freepik.com/free-photo/green-grass-texture-background_1249-535.jpg'); background-size: cover; cursor: pointer; }
-    .divider { border-right: 4px dashed #333 !important; }
+    .cell { 
+        width: 60px; height: 60px; border: 1px solid rgba(255,255,255,0.1); position: relative; 
+        background-image: url('https://www.transparenttextures.com/patterns/p6-dark.png'); /* Текстура поверх кольору */
+        background-color: #4caf50; 
+        cursor: pointer; 
+    }
+    .cell:hover { filter: brightness(1.1); }
+    .divider { border-right: 4px dashed rgba(0,0,0,0.3) !important; }
     
     .panel { width: 220px; }
     .card { background: white; padding: 12px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-    .shopImg { width: 100%; height: 80px; object-fit: contain; }
+    .shopImg { width: 100%; height: 70px; object-fit: contain; margin-bottom: 5px; }
     
-    .unitImg { width: 100%; height: 100%; object-fit: contain; }
-    .unitP1 { filter: drop-shadow(0 0 3px #2196F3); } 
-    .unitP2 { filter: drop-shadow(0 0 3px #f44336); }
-    .hp { position: absolute; bottom: 2px; right: 2px; font-size: 11px; color: white; background: rgba(0,0,0,0.8); padding: 1px 4px; border-radius: 3px; }
-    .mp { position: absolute; top: 2px; left: 2px; font-size: 10px; background: white; padding: 1px 3px; border-radius: 4px; border: 1px solid #999; }
+    .unitImg { width: 90%; height: 90%; object-fit: contain; margin: 5%; pointer-events: none; }
+    .unitP1 { filter: drop-shadow(0 0 4px #2196F3); } 
+    .unitP2 { filter: drop-shadow(0 0 4px #f44336); }
+    .hp { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: white; background: rgba(0,0,0,0.8); padding: 1px 4px; border-radius: 3px; font-weight: bold; }
+    .mp { position: absolute; top: 2px; left: 2px; font-size: 10px; background: white; padding: 1px 3px; border-radius: 4px; border: 1px solid #999; color: #333; }
 
     /* РЕДАКТОР */
     .editor-set { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; border: 1px solid #ddd; }
@@ -43,13 +49,15 @@
     .img-edit-group { display: flex; align-items: center; gap: 10px; background: #eee; padding: 8px; border-radius: 8px; margin-bottom: 5px; }
     .editor-img-preview { width: 40px; height: 40px; object-fit: contain; background: white; border-radius: 4px; }
     
-    .buyBtn { background: #4CAF50; border: none; border-radius: 8px; padding: 10px; color: white; font-weight: bold; cursor: pointer; width: 100%; }
+    .buyBtn { background: #4CAF50; border: none; border-radius: 8px; padding: 10px; color: white; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+    .buyBtn:hover { background: #388e3c; }
     .buyBtn:disabled { background: #bbb; cursor: not-allowed; }
     .delete-btn { color: #ff5252; cursor: pointer; border: none; background: none; font-size: 18px; }
 
-    .city { background: rgba(255, 215, 0, 0.3); }
-    .selected { outline: 4px solid #2196F3; z-index: 10; }
-    .attackBorder { outline: 3px solid #ff0000; }
+    .city { background: rgba(255, 215, 0, 0.4) !important; border: 2px solid gold !important; box-sizing: border-box; }
+    .selected { outline: 4px solid white; z-index: 10; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+    .attackBorder { outline: 3px solid #ff5252; animation: blink 1s infinite; }
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -60,11 +68,11 @@
 </div>
 
 <div id="game-tab" class="tab-content active">
-    <div class="container" style="text-align: center;">
+    <div class="container">
         <div id="menu">
-            <h2>⚔️ Вхід у битву</h2>
+            <h2 style="margin-top:0;">⚔️ Beluga Battle</h2>
             <div class="menu-row">
-                <input type="text" id="roomInput" placeholder="Назва кімнати (код)">
+                <input type="text" id="roomInput" placeholder="Код кімнати">
                 <select id="playerSelect">
                     <option value="1">Гравець 1 (Сині)</option>
                     <option value="2">Гравець 2 (Червоні)</option>
@@ -72,23 +80,23 @@
             </div>
             <div class="menu-row">
                 <span>Твоя команда:</span>
-                <select id="teamSelect" style="min-width: 200px;"></select>
+                <select id="teamSelect" style="min-width: 180px;"></select>
             </div>
-            <button id="joinBtn" class="buyBtn" style="width: 200px; font-size: 1.1em;">Увійти в гру</button>
+            <button id="joinBtn" class="buyBtn" style="font-size: 16px;">Увійти в битву</button>
         </div>
 
         <div id="gameArea" style="display: none; width: 100%;">
-            <div style="display: flex; justify-content: center; gap: 20px;">
+            <div style="display: flex; justify-content: center; gap: 20px; align-items: flex-start;">
                 <div class="panel" id="leftPanel"></div>
                 <div>
-                    <div id="turnPanel" style="background: white; padding: 10px; border-radius: 10px; margin-bottom: 10px;">
+                    <div id="turnPanel" style="background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                         <h3 style="margin:0;">Хід: <span id="turn">1</span> | Гравець: <span id="playerDisplay">1</span></h3>
-                        <p>💰 Твій баланс: <span id="myMoney">0</span>к</p>
+                        <b style="color: #2e7d32;">💰 Баланс: <span id="myMoney">0</span>к</b>
                     </div>
                     <div id="gridWrapper"><div id="grid"></div></div>
                     <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                        <button onclick="window.endTurn()" class="buyBtn" id="endTurnBtn" style="width: auto; padding: 10px 40px;">Завершити хід</button>
-                        <button onclick="window.resetState()" class="buyBtn" style="background: #666; width: auto;">Скинути гру</button>
+                        <button onclick="window.endTurn()" class="buyBtn" id="endTurnBtn" style="width: auto; padding: 10px 40px; background: #2196F3;">Завершити хід</button>
+                        <button onclick="window.resetState()" class="buyBtn" style="background: #666; width: auto; padding: 10px 20px;">Скинути поле</button>
                     </div>
                 </div>
                 <div class="panel" id="rightPanel"></div>
@@ -100,7 +108,7 @@
 <div id="units-tab" class="tab-content">
     <div style="max-width: 900px; margin: 0 auto;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>🛠️ Твої армії</h2>
+            <h2>🛠️ Налаштування армій</h2>
             <button class="buyBtn" onclick="window.addNewSet()" style="width: auto;">+ Створити нову команду</button>
         </div>
         <hr>
@@ -112,7 +120,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-// === FIREBASE ===
 const firebaseConfig = {
   apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY",
   databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com",
@@ -123,10 +130,11 @@ const db = getDatabase(app);
 
 // === СТАН ===
 const DEFAULT_SET = {
-    name: "Стандартна армія",
+    name: "Класична армія",
     units: {
         inf: {name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000, img1:"https://cdn-icons-png.flaticon.com/512/3225/3225026.png", img2:"https://cdn-icons-png.flaticon.com/512/3225/3225026.png"},
-        arc: {name:"Лучник", speed:2, atk:15, hp:40, range:3, price:60000, img1:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png", img2:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png"}
+        arc: {name:"Лучник", speed:2, atk:15, hp:40, range:3, price:60000, img1:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png", img2:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png"},
+        cav: {name:"Лицар", speed:5, atk:25, hp:70, range:1, price:120000, img1:"https://cdn-icons-png.flaticon.com/512/2830/2830305.png", img2:"https://cdn-icons-png.flaticon.com/512/2830/2830305.png"}
     }
 };
 
@@ -137,14 +145,14 @@ let state = {
     units:[], 
     money:{1:500000, 2:500000}, 
     cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}],
-    playerConfigs: { 1: DEFAULT_SET, 2: DEFAULT_SET } // Дані команд завантажуються сюди
+    playerConfigs: { 1: DEFAULT_SET, 2: DEFAULT_SET } 
 };
 let turn = 1;
 let currentPlayer = 1;
 let selectedUnit = null;
 let buyMode = null;
 
-// === WINDOW FUNCTIONS (HTML ACCESS) ===
+// === WINDOW FUNCTIONS ===
 
 window.openTab = (e, id) => {
     document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
@@ -162,7 +170,7 @@ window.deleteSet = (i) => { if(confirm("Видалити?")) { unitSets.splice(i
 
 window.addUnitToSet = (si) => {
     const id = "u" + Date.now();
-    unitSets[si].units[id] = {name:"Новий", speed:2, atk:10, hp:50, range:1, price:20000, img1:DEFAULT_SET.units.inf.img1, img2:DEFAULT_SET.units.inf.img2};
+    unitSets[si].units[id] = { ...DEFAULT_SET.units.inf };
     saveLocal(); renderEditor();
 };
 
@@ -189,10 +197,9 @@ window.endTurn = () => {
     if(currentPlayer === 1) turn++;
     state.money[currentPlayer] += 100000;
     
-    // Скидання очок руху за характеристиками ВЛАСНИКА юніта
     state.units.forEach(u => {
         if(u.owner === currentPlayer) {
-            const config = state.playerConfigs[u.owner].units[u.type];
+            const config = (state.playerConfigs[u.owner]?.units || {})[u.type];
             u.movePoints = config ? config.speed : 1;
             u.attacked = false;
         }
@@ -202,7 +209,7 @@ window.endTurn = () => {
 };
 
 window.resetState = () => {
-    if(!confirm("Скинути?")) return;
+    if(!confirm("Скинути все поле?")) return;
     state.units = []; state.money = {1:500000, 2:500000}; turn = 1; currentPlayer = 1;
     saveFirebase();
 };
@@ -222,18 +229,25 @@ document.getElementById('joinBtn').onclick = () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
     const teamIdx = document.getElementById('teamSelect').value;
-    const myTeam = unitSets[teamIdx];
+    const myTeam = unitSets[teamIdx] || DEFAULT_SET;
 
-    if(!room) return alert("Введіть код кімнати");
+    if(!room) return alert("Введіть назву кімнати");
 
     get(ref(db, 'games/'+room)).then(snap => {
         if(!snap.exists()) {
+            state = { 
+                units:[], 
+                money:{1:500000, 2:500000}, 
+                cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}],
+                playerConfigs: {} 
+            };
             state.playerConfigs[playerId] = myTeam;
             saveFirebase();
         } else {
             const data = snap.val();
             state = data.state;
-            state.playerConfigs[playerId] = myTeam; // Оновлюємо лише свій конфиг
+            if(!state.playerConfigs) state.playerConfigs = {};
+            state.playerConfigs[playerId] = myTeam;
             saveFirebase();
         }
         document.getElementById('menu').style.display = 'none';
@@ -245,8 +259,15 @@ document.getElementById('joinBtn').onclick = () => {
 
 function syncFirebase() {
     onValue(ref(db, 'games/'+room), (snap) => {
-        const d = snap.val(); if(!d) return;
-        state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
+        const d = snap.val(); if(!d || !d.state) return;
+        state = d.state;
+        // Захист від undefined масивів
+        if(!state.units) state.units = [];
+        if(!state.cities) state.cities = [];
+        if(!state.playerConfigs) state.playerConfigs = {};
+        
+        turn = d.turn || 1; 
+        currentPlayer = d.currentPlayer || 1;
         render();
     });
 }
@@ -267,136 +288,12 @@ function createGrid(){
 
 function cellClick(x, y) {
     if(currentPlayer !== playerId) return;
-    const unit = state.units.find(u => u.x === x && u.y === y);
-    const myConfig = state.playerConfigs[playerId].units;
+    const unit = (state.units || []).find(u => u.x === x && u.y === y);
+    const myConfig = (state.playerConfigs[playerId]?.units || {});
 
     if(buyMode) {
         const uInfo = myConfig[buyMode];
         const isMySide = (playerId === 1) ? x < 9 : x >= 9;
         if(!unit && isMySide && state.money[playerId] >= uInfo.price) {
             state.money[playerId] -= uInfo.price;
-            state.units.push({ x, y, owner: playerId, type: buyMode, hp: uInfo.hp, movePoints: 0, attacked: true });
-            buyMode = null; saveFirebase();
-        }
-        return;
-    }
-
-    if(unit && unit.owner === playerId) { selectedUnit = unit; render(); return; }
-
-    if(unit && unit.owner !== playerId && selectedUnit && !selectedUnit.attacked) {
-        const sInfo = state.playerConfigs[selectedUnit.owner].units[selectedUnit.type];
-        const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
-        if(dist <= sInfo.range) {
-            unit.hp -= sInfo.atk;
-            selectedUnit.attacked = true;
-            if(unit.hp <= 0) state.units = state.units.filter(u => u !== unit);
-            saveFirebase();
-        }
-        return;
-    }
-
-    if(selectedUnit && selectedUnit.movePoints > 0 && !unit) {
-        const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
-        if(dist <= selectedUnit.movePoints) {
-            selectedUnit.x = x; selectedUnit.y = y;
-            selectedUnit.movePoints -= dist;
-            saveFirebase();
-        }
-    }
-}
-
-function render() {
-    document.getElementById('turn').innerText = turn;
-    document.getElementById('playerDisplay').innerText = currentPlayer;
-    document.getElementById('myMoney').innerText = Math.floor(state.money[playerId]/1000);
-    document.getElementById('endTurnBtn').disabled = (currentPlayer !== playerId);
-
-    document.querySelectorAll('.cell').forEach(c => {
-        c.innerHTML = ''; c.classList.remove('selected','attackBorder','city');
-    });
-
-    state.cities.forEach(c => document.getElementById(`c-${c.x}-${c.y}`).classList.add('city'));
-
-    state.units.forEach(u => {
-        const cell = document.getElementById(`c-${u.x}-${u.y}`);
-        const config = state.playerConfigs[u.owner].units[u.type];
-        if(!config) return;
-
-        const img = document.createElement('img');
-        img.src = u.owner === 1 ? config.img1 : config.img2;
-        img.className = 'unitImg ' + (u.owner === 1 ? 'unitP1' : 'unitP2');
-        cell.appendChild(img);
-        
-        const hp = document.createElement('div'); hp.className = 'hp'; hp.innerText = u.hp; cell.appendChild(hp);
-        const mp = document.createElement('div'); mp.className = 'mp'; mp.innerText = u.movePoints; cell.appendChild(mp);
-        if(u === selectedUnit) cell.classList.add('selected');
-    });
-
-    renderShop();
-}
-
-function renderShop() {
-    const myUnits = state.playerConfigs[playerId].units;
-    const enemyUnits = state.playerConfigs[playerId === 1 ? 2 : 1].units;
-    
-    const draw = (units, targetId, p) => {
-        let h = `<h4>Армія Гравця ${p}</h4>`;
-        Object.keys(units).forEach(k => {
-            const u = units[k];
-            h += `<div class="card">
-                <b>${u.name}</b><br><img src="${p===1?u.img1:u.img2}" class="shopImg">
-                <div style="font-size:11px">⚔️${u.atk} ❤️${u.hp} 🎯${u.range}</div>
-                <button class="buyBtn" onclick="window.startBuy('${k}')" ${ (p!==playerId || currentPlayer!==playerId)?'disabled':''}>${Math.floor(u.price/1000)}к</button>
-            </div>`;
-        });
-        document.getElementById(targetId).innerHTML = h;
-    };
-
-    draw(state.playerConfigs[1].units, 'leftPanel', 1);
-    draw(state.playerConfigs[2].units, 'rightPanel', 2);
-}
-
-function renderEditor() {
-    document.getElementById('setsContainer').innerHTML = unitSets.map((s, si) => `
-        <div class="editor-set">
-            <div style="display:flex; justify-content:space-between;">
-                <h3>📦 Команда: ${s.name}</h3>
-                <button class="delete-btn" onclick="window.deleteSet(${si})">🗑️ Видалити команду</button>
-            </div>
-            ${Object.keys(s.units).map(k => {
-                const u = s.units[k];
-                return `
-                <div class="unit-entry">
-                    <div class="unit-main-stats">
-                        <input type="text" value="${u.name}" onchange="window.updateUnit(${si},'${k}','name',this.value)">
-                        <input type="number" value="${u.speed}" onchange="window.updateUnit(${si},'${k}','speed',this.value)" title="Рух">
-                        <input type="number" value="${u.atk}" onchange="window.updateUnit(${si},'${k}','atk',this.value)" title="Атака">
-                        <input type="number" value="${u.hp}" onchange="window.updateUnit(${si},'${k}','hp',this.value)" title="HP">
-                        <input type="number" value="${u.range}" onchange="window.updateUnit(${si},'${k}','range',this.value)" title="Дальність">
-                        <input type="number" value="${u.price}" onchange="window.updateUnit(${si},'${k}','price',this.value)" title="Ціна">
-                        <button class="delete-btn" onclick="window.deleteUnit(${si},'${k}')">✖</button>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div class="img-edit-group">
-                            <img src="${u.img1}" class="editor-img-preview">
-                            <input type="text" value="${u.img1.slice(0,20)}..." onchange="window.updateUnit(${si},'${k}','img1',this.value)" placeholder="URL">
-                            <input type="file" style="width:70px" onchange="window.uploadImg(this,${si},'${k}','img1')">
-                        </div>
-                        <div class="img-edit-group">
-                            <img src="${u.img2}" class="editor-img-preview">
-                            <input type="text" value="${u.img2.slice(0,20)}..." onchange="window.updateUnit(${si},'${k}','img2',this.value)" placeholder="URL">
-                            <input type="file" style="width:70px" onchange="window.uploadImg(this,${si},'${k}','img2')">
-                        </div>
-                    </div>
-                </div>`;
-            }).join('')}
-            <button class="buyBtn" style="background:#666; margin-top:10px;" onclick="window.addUnitToSet(${si})">+ Додати юніта</button>
-        </div>
-    `).join('');
-}
-
-updateTeamSelect();
-renderEditor();
-</script>
-</body>
-</html>
+            state
