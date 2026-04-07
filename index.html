@@ -3,148 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga 3 Multiplayer v2</title>
+<title>Beluga 3 Multiplayer v2 FIX</title>
 
 <style>
-body {
-  font-family: Arial;
-  background:#f0f0f0;
-  display:flex;
-  justify-content:center;
-  gap:20px;
-  flex-wrap: wrap;
-}
-
-/* GRID */
-#grid {
-  display:grid;
-  grid-template-columns: repeat(18, 60px);
-}
-
-.cell {
-  width:60px;
-  height:60px;
-  border:1px solid #ccc;
-  position:relative;
-}
-
-.p1 { background:#d0f0ff; }
-.p2 { background:#ffd0d0; }
-
-.move { background:rgba(0,255,0,0.3); }
-.future { background:rgba(255,255,0,0.3); }
-
-.attackBorder {
-  outline:3px solid red;
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text y="24" font-size="24">⚔️</text></svg>') 0 24, auto;
-}
-
-.city { background:gold; }
-.selected { outline:3px solid black; }
-
-/* ЮНІТИ */
-.unitImg {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  border-radius:6px;
-}
-
-.unitP1 { outline:3px solid #2196F3; }
-.unitP2 { outline:3px solid #f44336; }
-
-.hp {
-  position:absolute;
-  bottom:2px;
-  right:2px;
-  font-size:12px;
-  color:white;
-  background:rgba(0,0,0,0.6);
-  padding:2px;
-}
-
-.mp {
-  position:absolute;
-  top:2px;
-  left:2px;
-  font-size:11px;
-  background:white;
-  padding:1px 3px;
-  border-radius:4px;
-}
-
-/* ПАНЕЛІ */
+body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
+#grid {display:grid;grid-template-columns: repeat(18, 60px);} 
+.cell {width:60px;height:60px;border:1px solid #ccc;position:relative;}
+.p1 { background:#d0f0ff; } .p2 { background:#ffd0d0; }
+.move { background:rgba(0,255,0,0.3); } .future { background:rgba(255,255,0,0.3); }
+.attackBorder {outline:3px solid red;cursor:pointer;}
+.city { background:gold; } .selected { outline:3px solid black; }
+.unitImg {width:100%;height:100%;object-fit:contain;border-radius:6px;}
+.unitP1 { outline:3px solid #2196F3; } .unitP2 { outline:3px solid #f44336; }
+.hp {position:absolute;bottom:2px;right:2px;font-size:12px;color:white;background:rgba(0,0,0,0.6);padding:2px;}
+.mp {position:absolute;top:2px;left:2px;font-size:11px;background:white;padding:1px 3px;border-radius:4px;}
 .panel { width:220px; }
-
-.card {
-  background:white;
-  padding:10px;
-  margin-bottom:12px;
-  border-radius:10px;
-}
-
-/* SHOP */
+.card {background:white;padding:10px;margin-bottom:12px;border-radius:10px;}
 .shopCard { text-align:center; }
-
-.shopImg {
-  width:100%;
-  height:110px;
-  object-fit:contain;
-  margin:6px 0;
-}
-
-.title {
-  font-weight:bold;
-  margin-bottom:4px;
-}
-
-.stats {
-  font-size:14px;
-  margin-bottom:4px;
-}
-
-.price {
-  font-weight:bold;
-  margin-bottom:6px;
-}
-
-/* КНОПКА */
-.buyBtn {
-  background: linear-gradient(180deg, #4CAF50, #2e7d32);
-  border: none;
-  border-radius: 8px;
-  padding: 8px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-  width:100%;
-}
-
+.shopImg {width:100%;height:110px;object-fit:contain;margin:6px 0;}
+.title {font-weight:bold;margin-bottom:4px;} .stats {font-size:14px;margin-bottom:4px;} .price {font-weight:bold;margin-bottom:6px;}
+.buyBtn {background: linear-gradient(180deg, #4CAF50, #2e7d32);border: none;border-radius: 8px;padding: 8px;color: white;font-weight: bold;cursor: pointer;width:100%;}
 .buyBtn:hover { transform: scale(1.05); }
 .buyBtn:active { transform: scale(0.95); }
-
-.buyBtn:disabled {
-  background: #999;
-  cursor: not-allowed;
-  transform:none;
-}
-
-/* MENU */
-#menu {
-  width: 100%;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-#menu input { margin:5px; padding:5px; }
-#menu button { padding:5px 10px; }
-
-/* CENTERED TURN PANEL */
-#turnPanel {
-  text-align: center;
-  margin-bottom: 10px;
-}
+.buyBtn:disabled {background: #999;cursor: not-allowed;}
+#menu {width: 100%;text-align: center;margin-bottom: 10px;}
+#turnPanel {text-align: center;margin-bottom: 10px;}
 </style>
 </head>
 
@@ -163,7 +46,6 @@ body {
 <div class="panel" id="leftPanel"></div>
 
 <div>
-  <!-- Перемістили лічильник та бюджети сюди, над полем -->
   <div id="turnPanel">
     <h3>
       Хід: <span id="turn"></span> |
@@ -175,12 +57,11 @@ body {
 
   <div id="grid"></div>
   <button onclick="endTurn()" class="buyBtn" id="endTurnBtn">Закінчити хід</button>
-  <button onclick="resetState()" class="buyBtn" id="newGameBtn" style="margin-top:10px;">Нова гра</button>
+  <button onclick="resetState()" class="buyBtn" style="margin-top:10px;">Нова гра</button>
 </div>
 
 <div class="panel" id="rightPanel"></div>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
@@ -198,15 +79,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- GAME STATE ---
 const width = 18;
 const height = 10;
-let currentPlayer = 1;
+
+let currentPlayer = 1; // чий хід
+let playerId = 1; // хто ти
+
 let turn = 1;
 let selectedUnit = null;
 let buyMode = null;
 let room = "";
-let playerId = 1;
 
 function fm(n){ return (n/1000)+'к'; }
 
@@ -218,7 +100,6 @@ const unitTypes = {
 
 let state = { units:[], money:{1:500000,2:500000}, cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}] };
 
-// --- GRID ---
 function createGrid(){
   let g=document.getElementById('grid'); g.innerHTML='';
   for(let y=0;y<height;y++){
@@ -235,7 +116,6 @@ function createGrid(){
 
 function getCell(x,y){ return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`); }
 
-// --- RENDER ---
 function render(){
   turnEl.innerText=turn;
   playerEl.innerText=currentPlayer;
@@ -267,7 +147,6 @@ function render(){
   renderPanels();
 }
 
-// --- SHOP ---
 function renderPanels(){
   let html1='', html2='';
   Object.keys(unitTypes).forEach(k=>{
@@ -286,37 +165,45 @@ function renderPanels(){
   leftPanel.innerHTML=html1; rightPanel.innerHTML=html2;
 }
 
-// --- BUY ---
+// ===== FIXED BUY LOGIC =====
 function startBuy(type, player){
-  if(player !== currentPlayer) return;
+  if(player !== playerId) return; // тепер перевірка хто ти
   buyMode = type;
 }
 
-function isOwnSide(x){ return currentPlayer===1?x<9:x>=9; }
+function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
-// --- CLICK ---
 function cellClick(x,y){
-  if(!room) return; 
+  if(!room) return;
+
   let unit=state.units.find(u=>u.x===x&&u.y===y);
-  if(buyMode){ if(unit || !isOwnSide(x)) return;
+
+  if(buyMode){
+    if(currentPlayer !== playerId) return; // не твій хід
+    if(unit || !isOwnSide(x)) return;
+
     let u=unitTypes[buyMode];
-    if(state.money[currentPlayer]<u.price) return;
-    state.money[currentPlayer]-=u.price;
-    state.units.push({x,y,owner:currentPlayer,type:buyMode,hp:u.hp,movePoints:0,attacked:true});
-    buyMode=null; saveState(); render(); return;
+    if(state.money[playerId]<u.price) return;
+
+    state.money[playerId]-=u.price;
+    state.units.push({x,y,owner:playerId,type:buyMode,hp:u.hp,movePoints:0,attacked:true});
+
+    buyMode=null;
+    saveState();
+    render();
+    return;
   }
+
   if(unit && unit.owner===currentPlayer){ selectedUnit=unit; render(); return; }
   if(unit && unit.owner!==currentPlayer && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
   if(selectedUnit && selectedUnit.movePoints>0){ if(state.units.some(u=>u.x===x&&u.y===y)) return; moveUnit(selectedUnit,x,y); saveState(); render(); }
 }
 
-// --- MOVE ---
 function moveUnit(u,x,y){
   let dx=Math.abs(u.x-x); let dy=Math.abs(u.y-y); let dist=Math.max(dx,dy);
   if(dist<=u.movePoints){ u.movePoints-=dist; u.x=x; u.y=y; }
 }
 
-// --- ATTACK ---
 function attackUnit(a,d){
   let t=unitTypes[a.type];
   let dx=Math.abs(a.x-d.x); let dy=Math.abs(a.y-d.y);
@@ -325,7 +212,6 @@ function attackUnit(a,d){
   }
 }
 
-// --- HIGHLIGHT ---
 function highlightMoves(u){ let s=u.movePoints;
   for(let dx=-s;dx<=s;dx++){ for(let dy=-s;dy<=s;dy++){
     let nx=u.x+dx, ny=u.y+dy;
@@ -343,14 +229,12 @@ function highlightAttacks(u){ let r=unitTypes[u.type].range;
   }});
 }
 
-// --- TURN ---
 function endTurn(){ currentPlayer=currentPlayer===1?2:1; if(currentPlayer===1) turn++;
   state.money[currentPlayer]+=100000;
   state.units.forEach(u=>{ if(u.owner===currentPlayer){ u.movePoints=unitTypes[u.type].speed; u.attacked=false; }});
   selectedUnit=null; saveState(); render();
 }
 
-// --- FIREBASE ---
 function saveState(){ if(!room) return; set(ref(db,'games/'+room),{state,turn,currentPlayer}); }
 function loadState(){ if(!room) return; onValue(ref(db,'games/'+room),(snapshot)=>{ const data = snapshot.val(); if(!data) return;
   state=data.state||state; turn=data.turn||1; currentPlayer=data.currentPlayer||1; render();
@@ -361,16 +245,17 @@ function resetState(){
   turn=1; currentPlayer=1; saveState(); render();
 }
 
-// --- JOIN ---
+// JOIN
+
 document.getElementById('joinBtn').addEventListener('click',()=>{
   room = document.getElementById('roomInput').value.trim();
   playerId = parseInt(document.getElementById('playerSelect').value);
-  currentPlayer = playerId;
+
   createGrid();
 
   get(ref(db,'games/'+room)).then(snapshot=>{
     if(!snapshot.exists()){ resetState(); } 
-    else { const data=snapshot.val(); state=data.state||state; turn=data.turn||1; currentPlayer=data.currentPlayer||playerId; render(); }
+    else { const data=snapshot.val(); state=data.state||state; turn=data.turn||1; currentPlayer=data.currentPlayer||1; render(); }
     loadState();
   });
 });
