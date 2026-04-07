@@ -13,6 +13,52 @@ body {
   justify-content:center;
   gap:20px;
 }
+  .shopCard {
+  text-align: center;
+}
+
+.shopImg {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  margin: 6px 0;
+}
+
+.title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.stats {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.price {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+/* красива кнопка */
+.buyBtn {
+  background: linear-gradient(180deg, #4CAF50, #2e7d32);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.buyBtn:hover {
+  transform: scale(1.05);
+}
+
+.buyBtn:active {
+  transform: scale(0.95);
+}
+🔥 Резуль
 
 #grid {
   display:grid;
@@ -222,15 +268,25 @@ function render(){
 // --- SHOP ---
 function renderPanels(){
   let html='';
+
   Object.keys(unitTypes).forEach(k=>{
     let u=unitTypes[k];
+
     html+=`
-    <div class='card'>
-      <b>${u.name}</b><br>
-      <img src="${u.img1}" style="width:100%;height:80px;object-fit:contain;"><br>
-      🏃${u.speed} ⚔️${u.atk} ❤️${u.hp} 🎯${u.range}<br>
-      💰${fm(u.price)}
-      <button onclick="startBuy('${k}')">Купити</button>
+    <div class='card shopCard'>
+      
+      <div class="title">${u.name}</div>
+
+      <img src="${currentPlayer === 1 ? u.img1 : u.img2}" class="shopImg">
+
+      <div class="stats">
+        🏃 ${u.speed} &nbsp; ⚔️ ${u.atk} &nbsp; ❤️ ${u.hp} &nbsp; 🎯 ${u.range}
+      </div>
+
+      <div class="price">💰 ${fm(u.price)}</div>
+
+      <button class="buyBtn" onclick="startBuy('${k}')">Купити</button>
+
     </div>`;
   });
 
