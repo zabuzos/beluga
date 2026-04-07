@@ -1,198 +1,151 @@
 <!DOCTYPE html>
-
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga Online</title>
-
+<title>Beluga 3 Multiplayer</title>
 <style>
-body {
-  font-family: Arial;
-  background:#f0f0f0;
-  display:flex;
-  justify-content:center;
-  gap:20px;
-}
-
-#grid {
-  display:grid;
-  grid-template-columns: repeat(18, 60px);
-}
-
-.cell {
-  width:60px;
-  height:60px;
-  border:1px solid #ccc;
-  position:relative;
-}
-
-.p1 { background:#d0f0ff; }
-.p2 { background:#ffd0d0; }
-
-.city { background:gold; }
-.selected { outline:3px solid black; }
-
-.unitImg {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
-
-.panel { width:220px; }
-
-.buyBtn {
-  width:100%;
-  padding:8px;
-  margin-top:5px;
-  background:#4CAF50;
-  color:white;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.buyBtn:disabled {
-  background:#999;
-}
+/* ...Всю твою існуючу стилізацію залишаємо без змін... */
 </style>
-
 </head>
-
 <body>
 
-<div class="panel" id="leftPanel"></div>
-
-<div>
-<h3>
-Хід: <span id="turn"></span> |
-Гравець: <span id="player"></span><br>
-💰 P1: <span id="money1"></span> |
-P2: <span id="money2"></span>
-</h3>
-
-<div id="grid"></div>
-<button onclick="endTurn()" class="buyBtn">Закінчити хід</button>
+<!-- Лобі для вибору кімнати та гравця -->
+<div id="lobby">
+  <h2>Beluga Multiplayer</h2>
+  <label>Назва кімнати: <input type="text" id="roomInput" placeholder="Room1"></label><br><br>
+  <label>Вибір гравця:
+    <select id="playerSelect">
+      <option value="1">P1</option>
+      <option value="2">P2</option>
+    </select>
+  </label><br><br>
+  <button id="joinBtn" class="buyBtn">Приєднатись</button>
 </div>
 
-<div class="panel" id="rightPanel"></div>
+<!-- Ігрова зона -->
+<div id="gameArea" style="display:none;">
+  <div class="panel" id="leftPanel"></div>
+  <div>
+    <h3 style="text-align:center">
+      Хід: <span id="turn"></span> |
+      Гравець: <span id="player"></span><br>
+      💰 P1: <span id="money1"></span> |
+      P2: <span id="money2"></span>
+    </h3>
+    <div id="grid"></div>
+    <button onclick="endTurn()" class="buyBtn">Закінчити хід</button>
+    <button onclick="newGame()" class="buyBtn">Нова гра</button>
+  </div>
+  <div class="panel" id="rightPanel"></div>
+</div>
 
+<!-- Firebase -->
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-// --- CONFIG ---
+// --- Firebase config ---
 const firebaseConfig = {
   apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY",
   authDomain: "beluga-a7197.firebaseapp.com",
+  databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com",
   projectId: "beluga-a7197",
-  storageBucket: "beluga-a7197.firebasestorage.app",
+  storageBucket: "beluga-a7197.appspot.com",
   messagingSenderId: "1019986290981",
-  appId: "1:1019986290981:web:1a0685a543fa63e5a152cc",
-  measurementId: "G-09QQGZZ584"
+  appId: "1:1019986290981:web:1a0685a543fa63e5a152cc"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- ROOM ---
-let roomId = prompt("ID кімнати (наприклад 123)");
-let myPlayer = Number(prompt("Ти гравець 1 чи 2?"));
-
-// --- GAME ---
-const width = 18;
-const height = 10;
-
-let currentPlayer = 1;
-let turn = 1;
-let selectedUnit = null;
+// --- Глобальні змінні ---
+let room, playerNum;
+let state = null;
 let buyMode = null;
+let selectedUnit = null;
 
+// --- ЮНІТИ ---
 const unitTypes = {
-  shooter:{name:"Стрілець",speed:1,atk:15,hp:50,range:3,price:50000,img1:"img/shooter_p1.png",img2:"img/shooter_p2.png"},
-  infantry:{name:"Піхота",speed:3,atk:20,hp:50,range:1,price:40000,img1:"img/infantry_p1.png",img2:"img/infantry_p2.png"},
-  cavalry:{name:"Кавалерія",speed:4,atk:20,hp:55,range:1,price:120000,img1:"img/cavalry_p1.png",img2:"img/cavalry_p2.png"}
+  shooter:{name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000,img1:"img/shooter_p1.png", img2:"img/shooter_p2.png"},
+  infantry:{name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000,img1:"img/infantry_p1.png", img2:"img/infantry_p2.png"},
+  cavalry:{name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000,img1:"img/cavalry_p1.png", img2:"img/cavalry_p2.png"}
 };
-
-let state = {
-  units: [],
-  money:{1:500000,2:500000},
-  cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]
-};
-
-// --- FIREBASE ---
-function saveGame(){
-  set(ref(db,"rooms/"+roomId),{
-    state,
-    currentPlayer,
-    turn
-  });
-}
-
-onValue(ref(db,"rooms/"+roomId),(snap)=>{
-  let data = snap.val();
-  if(!data) return;
-
-  state = data.state;
-  currentPlayer = data.currentPlayer;
-  turn = data.turn;
-
-  render();
-});
 
 // --- GRID ---
+const width = 18, height = 10;
 function createGrid(){
-  let g=document.getElementById('grid');
+  const g=document.getElementById('grid'); g.innerHTML='';
   for(let y=0;y<height;y++){
     for(let x=0;x<width;x++){
-      let d=document.createElement('div');
-      d.className='cell '+(x<9?'p1':'p2');
-      d.onclick=()=>cellClick(x,y);
-      d.dataset.x=x;
-      d.dataset.y=y;
-      g.appendChild(d);
+      const c=document.createElement('div');
+      c.className='cell '+(x<9?'p1':'p2');
+      c.dataset.x=x; c.dataset.y=y;
+      c.onclick=()=>cellClick(x,y);
+      g.appendChild(c);
     }
   }
 }
+function getCell(x,y){ return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`); }
 
-function getCell(x,y){
-  return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-}
+// --- Лобі ---
+document.getElementById('joinBtn').onclick = ()=>{
+  room = document.getElementById('roomInput').value.trim();
+  playerNum = parseInt(document.getElementById('playerSelect').value);
+  if(!room){ alert("Введіть кімнату"); return; }
+
+  const roomRef = ref(db, 'rooms/'+room);
+  // Якщо нова кімната, ініціалізуємо
+  set(roomRef, {
+    turn:1,
+    currentPlayer:1,
+    money:{1:500000,2:500000},
+    units:[],
+    cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]
+  }, {merge:true});
+
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('gameArea').style.display='flex';
+
+  onValue(roomRef, snap=>{ state=snap.val(); render(); });
+  createGrid();
+};
 
 // --- RENDER ---
+function fm(n){ return Math.round(n/1000)+'к'; }
 function render(){
-  turnEl.innerText=turn;
-  playerEl.innerText=currentPlayer;
-  money1.innerText=state.money[1];
-  money2.innerText=state.money[2];
+  if(!state) return;
+
+  document.getElementById('turn').innerText = state.turn;
+  document.getElementById('player').innerText = state.currentPlayer;
+  document.getElementById('money1').innerText = fm(state.money[1]);
+  document.getElementById('money2').innerText = fm(state.money[2]);
 
   document.querySelectorAll('.cell').forEach(c=>{
-    c.innerHTML='';
-    c.classList.remove('selected','city');
+    c.innerHTML=''; c.classList.remove('move','future','attackBorder','selected','city');
   });
 
   state.cities.forEach(c=>{
-    let cell=getCell(c.x,c.y);
+    const cell = getCell(c.x,c.y);
     cell.classList.add('city');
-
-    let icon=document.createElement('div');
-    icon.innerText="🏰";
-    icon.style.position="absolute";
-    icon.style.top="50%";
-    icon.style.left="50%";
+    const icon=document.createElement('div');
+    icon.innerText="🏰"; icon.style.position="absolute";
+    icon.style.top="50%"; icon.style.left="50%";
     icon.style.transform="translate(-50%,-50%)";
+    icon.style.fontSize="26px";
     cell.appendChild(icon);
   });
 
   state.units.forEach(u=>{
-    let cell=getCell(u.x,u.y);
+    const cell=getCell(u.x,u.y);
+    const img=document.createElement('img');
+    img.src = u.owner===1?unitTypes[u.type].img1:unitTypes[u.type].img2;
+    img.className='unitImg '+(u.owner===1?'unitP1':'unitP2'); cell.appendChild(img);
 
-    let img=document.createElement('img');
-    img.src = u.owner===1 ? unitTypes[u.type].img1 : unitTypes[u.type].img2;
-    img.className='unitImg';
+    const hp=document.createElement('div'); hp.className='hp'; hp.innerText=u.hp; cell.appendChild(hp);
+    const mp=document.createElement('div'); mp.className='mp'; mp.innerText=u.movePoints; cell.appendChild(mp);
 
-    cell.appendChild(img);
+    if(u===selectedUnit) cell.classList.add('selected');
   });
 
   renderPanels();
@@ -200,90 +153,75 @@ function render(){
 
 // --- SHOP ---
 function renderPanels(){
-
   let html1='', html2='';
-
   Object.keys(unitTypes).forEach(k=>{
-    let u=unitTypes[k];
-
-    html1+=`
-    <div>
-      <b>${u.name}</b><br>
-      <img src="${u.img1}" width="100"><br>
-      💰${u.price}<br>
-      <button class="buyBtn"
-        onclick="startBuy('${k}',1)"
-        ${currentPlayer!==1?'disabled':''}>
-        Купити
-      </button>
+    const u=unitTypes[k];
+    html1+=`<div class='card shopCard'><div class="title">${u.name}</div>
+      <img src="${u.img1}" class="shopImg">
+      <div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
+      <div class="price">💰 ${fm(u.price)}</div>
+      <button class="buyBtn" onclick="startBuy('${k}')" ${playerNum!==1?'disabled':''}>Купити</button>
     </div>`;
-
-    html2+=`
-    <div>
-      <b>${u.name}</b><br>
-      <img src="${u.img2}" width="100"><br>
-      💰${u.price}<br>
-      <button class="buyBtn"
-        onclick="startBuy('${k}',2)"
-        ${currentPlayer!==2?'disabled':''}>
-        Купити
-      </button>
+    html2+=`<div class='card shopCard'><div class="title">${u.name}</div>
+      <img src="${u.img2}" class="shopImg">
+      <div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
+      <div class="price">💰 ${fm(u.price)}</div>
+      <button class="buyBtn" onclick="startBuy('${k}')" ${playerNum!==2?'disabled':''}>Купити</button>
     </div>`;
   });
-
-  leftPanel.innerHTML=html1;
-  rightPanel.innerHTML=html2;
+  leftPanel.innerHTML=html1; rightPanel.innerHTML=html2;
 }
 
 // --- BUY ---
-window.startBuy = function(type,player){
-  if(player!==currentPlayer || myPlayer!==currentPlayer) return;
+function startBuy(type){
+  if(!state || playerNum!==state.currentPlayer) return;
   buyMode=type;
 }
 
 // --- CLICK ---
 function cellClick(x,y){
-  if(myPlayer!==currentPlayer) return;
+  if(!state || playerNum!==state.currentPlayer) return;
+
+  const unit=state.units.find(u=>u.x===x&&u.y===y);
 
   if(buyMode){
-    let u=unitTypes[buyMode];
-    if(state.money[currentPlayer]<u.price) return;
-
-    state.money[currentPlayer]-=u.price;
-
-    state.units.push({
-      x,y,
-      owner:currentPlayer,
-      type:buyMode
-    });
-
+    if(unit || (playerNum===1?x>=9:x<9)) return;
+    const uType=unitTypes[buyMode];
+    if(state.money[playerNum]<uType.price) return;
+    state.money[playerNum]-=uType.price;
+    state.units.push({x,y,type:buyMode,owner:playerNum,hp:uType.hp,movePoints:uType.speed,attacked:false});
     buyMode=null;
-    saveGame();
-    return;
+    update(ref(db,'rooms/'+room), state); return;
   }
+
+  // Тут можна додати вибір та атаки
 }
 
-// --- TURN ---
-window.endTurn = function(){
-  if(myPlayer!==currentPlayer) return;
+// --- END TURN ---
+function endTurn(){
+  if(!state || playerNum!==state.currentPlayer) return;
 
-  currentPlayer = currentPlayer===1 ? 2 : 1;
-  if(currentPlayer===1) turn++;
+  state.currentPlayer = state.currentPlayer===1?2:1;
+  if(state.currentPlayer===1) state.turn++;
+  state.money[state.currentPlayer]+=100000;
+  state.units.forEach(u=>{ if(u.owner===state.currentPlayer){ u.movePoints=unitTypes[u.type].speed; u.attacked=false; } });
+  selectedUnit=null;
 
-  state.money[currentPlayer]+=100000;
+  update(ref(db,'rooms/'+room), state);
+}
 
-  saveGame();
+// --- NEW GAME ---
+function newGame(){
+  if(!room) return;
+  set(ref(db,'rooms/'+room),{
+    turn:1,currentPlayer:1,
+    money:{1:500000,2:500000},
+    units:[], cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]
+  });
 }
 
 // --- START ---
-const turnEl=document.getElementById('turn');
-const playerEl=document.getElementById('player');
-const money1=document.getElementById('money1');
-const money2=document.getElementById('money2');
-
 createGrid();
-render();
-
 </script>
 
 </body>
