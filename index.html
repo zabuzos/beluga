@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strategy Game</title>
+<title>Beluga 3</title>
 
 <style>
 body {
@@ -13,53 +13,8 @@ body {
   justify-content:center;
   gap:20px;
 }
-  .shopCard {
-  text-align: center;
-}
 
-.shopImg {
-  width: 100%;
-  height: 100px;
-  object-fit: contain;
-  margin: 6px 0;
-}
-
-.title {
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.stats {
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.price {
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-/* красива кнопка */
-.buyBtn {
-  background: linear-gradient(180deg, #4CAF50, #2e7d32);
-  border: none;
-  border-radius: 8px;
-  padding: 8px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.buyBtn:hover {
-  transform: scale(1.05);
-}
-
-.buyBtn:active {
-  transform: scale(0.95);
-}
-🔥 Резуль
-
+/* GRID */
 #grid {
   display:grid;
   grid-template-columns: repeat(18, 60px);
@@ -84,9 +39,9 @@ body {
 }
 
 .city { background:gold; }
-
 .selected { outline:3px solid black; }
 
+/* ЮНІТИ */
 .unitImg {
   width:100%;
   height:100%;
@@ -94,7 +49,6 @@ body {
   border-radius:6px;
 }
 
-/* бордер юнітів */
 .unitP1 { outline:3px solid #2196F3; }
 .unitP2 { outline:3px solid #f44336; }
 
@@ -118,19 +72,57 @@ body {
   border-radius:4px;
 }
 
-.panel { width:200px; }
+/* ПАНЕЛІ */
+.panel { width:220px; }
 
 .card {
   background:white;
-  padding:8px;
-  margin-bottom:10px;
-  border-radius:8px;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:10px;
 }
 
-button {
+/* SHOP */
+.shopCard { text-align:center; }
+
+.shopImg {
   width:100%;
-  margin-top:5px;
+  height:110px;
+  object-fit:contain;
+  margin:6px 0;
 }
+
+.title {
+  font-weight:bold;
+  margin-bottom:4px;
+}
+
+.stats {
+  font-size:14px;
+  margin-bottom:4px;
+}
+
+.price {
+  font-weight:bold;
+  margin-bottom:6px;
+}
+
+/* КНОПКА */
+.buyBtn {
+  background: linear-gradient(180deg, #4CAF50, #2e7d32);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  width:100%;
+}
+
+.buyBtn:hover { transform: scale(1.05); }
+.buyBtn:active { transform: scale(0.95); }
+
 </style>
 </head>
 
@@ -147,7 +139,7 @@ P2: <span id="money2"></span>
 </h3>
 
 <div id="grid"></div>
-<button onclick="endTurn()">Закінчити хід</button>
+<button onclick="endTurn()" class="buyBtn">Закінчити хід</button>
 </div>
 
 <div class="panel" id="rightPanel"></div>
@@ -185,7 +177,7 @@ const unitTypes = {
   }
 };
 
-// --- СТЕЙТ ---
+// --- STATE ---
 let state = {
   units: [],
   money:{1:500000,2:500000},
@@ -217,22 +209,20 @@ function getCell(x,y){
 
 // --- RENDER ---
 function render(){
-  document.getElementById('turn').innerText=turn;
-  document.getElementById('player').innerText=currentPlayer;
-  document.getElementById('money1').innerText=fm(state.money[1]);
-  document.getElementById('money2').innerText=fm(state.money[2]);
+  turnEl.innerText=turn;
+  playerEl.innerText=currentPlayer;
+  money1.innerText=fm(state.money[1]);
+  money2.innerText=fm(state.money[2]);
 
   document.querySelectorAll('.cell').forEach(c=>{
     c.innerHTML='';
     c.classList.remove('move','future','attackBorder','selected','city');
   });
 
-  // міста
   state.cities.forEach(c=>{
     getCell(c.x,c.y).classList.add('city');
   });
 
-  // юніти
   state.units.forEach(u=>{
     let cell=getCell(u.x,u.y);
 
@@ -274,19 +264,17 @@ function renderPanels(){
 
     html+=`
     <div class='card shopCard'>
-      
       <div class="title">${u.name}</div>
 
-      <img src="${currentPlayer === 1 ? u.img1 : u.img2}" class="shopImg">
+      <img src="${currentPlayer===1 ? u.img1 : u.img2}" class="shopImg">
 
       <div class="stats">
-        🏃 ${u.speed} &nbsp; ⚔️ ${u.atk} &nbsp; ❤️ ${u.hp} &nbsp; 🎯 ${u.range}
+        🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}
       </div>
 
       <div class="price">💰 ${fm(u.price)}</div>
 
       <button class="buyBtn" onclick="startBuy('${k}')">Купити</button>
-
     </div>`;
   });
 
@@ -301,7 +289,6 @@ function isOwnSide(x){ return currentPlayer===1?x<9:x>=9; }
 function cellClick(x,y){
   let unit=state.units.find(u=>u.x===x&&u.y===y);
 
-  // BUY
   if(buyMode){
     if(unit || !isOwnSide(x)) return;
 
@@ -324,21 +311,18 @@ function cellClick(x,y){
     return;
   }
 
-  // SELECT
   if(unit && unit.owner===currentPlayer){
     selectedUnit=unit;
     render();
     return;
   }
 
-  // ATTACK
   if(unit && unit.owner!==currentPlayer && selectedUnit && !selectedUnit.attacked){
     attackUnit(selectedUnit,unit);
     render();
     return;
   }
 
-  // MOVE
   if(selectedUnit && selectedUnit.movePoints>0){
     if(state.units.some(u=>u.x===x&&u.y===y)) return;
     moveUnit(selectedUnit,x,y);
@@ -429,6 +413,11 @@ function endTurn(){
 }
 
 // --- START ---
+const turnEl=document.getElementById('turn');
+const playerEl=document.getElementById('player');
+const money1=document.getElementById('money1');
+const money2=document.getElementById('money2');
+
 createGrid();
 render();
 </script>
