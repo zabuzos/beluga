@@ -182,7 +182,7 @@ function startBuy(type, player){
 function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
 function cellClick(x,y){
-  if(!room) return;
+// дозволяємо грати локально навіть без кімнати
 
   let unit=state.units.find(u=>u.x===x&&u.y===y);
 
