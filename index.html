@@ -236,7 +236,7 @@ function render(){
   playerEl.innerText=currentPlayer;
   money1.innerText=fm(state.money[1]);
   money2.innerText=fm(state.money[2]);
-
+document.getElementById('endTurnBtn').disabled = currentPlayer !== playerId;
   document.querySelectorAll('.cell').forEach(c=>{ c.innerHTML=''; c.classList.remove('move','future','attackBorder','selected','city'); });
 
   state.cities.forEach(c=>{
@@ -297,6 +297,10 @@ function startBuy(type, player){
 function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
 function cellClick(x,y){
+   // ❗ ГОЛОВНИЙ ФІКС
+  if(currentPlayer !== playerId) return;
+
+  let unit=state.units.find(u=>u.x===x&&u.y===y);
 // дозволяємо грати локально навіть без кімнати
 
   let unit=state.units.find(u=>u.x===x&&u.y===y);
@@ -317,8 +321,8 @@ function cellClick(x,y){
     return;
   }
 
-  if(unit && unit.owner===currentPlayer){ selectedUnit=unit; render(); return; }
-  if(unit && unit.owner!==currentPlayer && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
+  if(unit && unit.owner===playerId){ selectedUnit=unit; render(); return; }
+  if(unit && unit.owner!==playerId && selectedUnit && !selectedUnit.attacked){ attackUnit(selectedUnit,unit); saveState(); render(); return; }
   if(selectedUnit && selectedUnit.movePoints>0){ if(state.units.some(u=>u.x===x&&u.y===y)) return; moveUnit(selectedUnit,x,y); saveState(); render(); }
 }
 
