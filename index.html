@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beluga Battle - Fixed Version</title>
+<title>Beluga Battle - Full Restore</title>
 <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; margin: 0; padding: 20px; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
     .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
     
     .nav-tabs { width: 100%; display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
@@ -17,23 +17,31 @@
     .menu-row { margin: 15px 0; display: flex; gap: 10px; align-items: center; justify-content: center; }
     input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
 
-    #gridWrapper { overflow: auto; border: 3px solid #333; border-radius: 10px; background: #4caf50; margin: 0 auto; }
+    #gridWrapper { 
+        overflow: auto; border: 3px solid #333; border-radius: 10px; 
+        background-image: url('https://raw.githubusercontent.com/zabuzos/beluga/main/img/ground.png'); /* Твій фон з GitHub */
+        background-size: cover;
+        background-color: #4caf50; 
+    }
     #grid { display: grid; grid-template-columns: repeat(18, 60px); } 
-    .cell { width: 60px; height: 60px; border: 1px solid rgba(255,255,255,0.15); position: relative; cursor: pointer; }
+    .cell { width: 60px; height: 60px; border: 1px solid rgba(255,255,255,0.1); position: relative; cursor: pointer; }
     .divider { border-right: 4px dashed rgba(0,0,0,0.3) !important; }
     
     .panel { width: 230px; }
     .card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
     .shopImg { width: 100%; height: 60px; object-fit: contain; }
     
-    .unitImg { width: 80%; height: 80%; object-fit: contain; margin: 10%; pointer-events: none; }
+    .unitImg { width: 90%; height: 90%; object-fit: contain; margin: 5%; pointer-events: none; }
     .unitP1 { filter: drop-shadow(0 0 4px #2196F3); } 
     .unitP2 { filter: drop-shadow(0 0 4px #f44336); }
     .hp { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: white; background: #000; padding: 1px 4px; border-radius: 3px; }
-    .mp { position: absolute; top: 2px; left: 2px; font-size: 10px; background: #fff; padding: 1px 3px; border-radius: 4px; border: 1px solid #999; }
-
+    
     .buyBtn { background: #4CAF50; border: none; border-radius: 8px; padding: 10px; color: white; font-weight: bold; cursor: pointer; width: 100%; }
     .buyBtn:disabled { background: #bbb; cursor: not-allowed; }
+    
+    .editor-set { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 15px; }
+    .unit-entry { background: #f9f9f9; padding: 8px; border-bottom: 1px solid #eee; margin-top: 5px; font-size: 13px; }
+
     .city { background: rgba(255, 215, 0, 0.4) !important; border: 2px solid gold !important; box-sizing: border-box; }
     .selected { outline: 4px solid white; z-index: 10; }
 </style>
@@ -41,13 +49,11 @@
 <body>
 
 <script>
-    // Навігація вкладок (винесено для миттєвого доступу)
     window.openTab = function(e, id) {
-        var i, content, tabs;
-        content = document.getElementsByClassName("tab-content");
-        for (i = 0; i < content.length; i++) content[i].style.display = "none";
-        tabs = document.getElementsByClassName("tab-btn");
-        for (i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
+        var content = document.getElementsByClassName("tab-content");
+        for (var i = 0; i < content.length; i++) content[i].style.display = "none";
+        var tabs = document.getElementsByClassName("tab-btn");
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
         document.getElementById(id).style.display = "block";
         if (e) e.currentTarget.classList.add("active");
     };
@@ -63,17 +69,17 @@
         <div id="menu">
             <h2>⚔️ Beluga Multiplayer</h2>
             <div class="menu-row">
-                <input type="text" id="roomInput" placeholder="Код кімнати (напр. 111)">
+                <input type="text" id="roomInput" placeholder="Код кімнати">
                 <select id="playerSelect">
                     <option value="1">Гравець 1 (Сині)</option>
                     <option value="2">Гравець 2 (Червоні)</option>
                 </select>
             </div>
             <div class="menu-row">
-                <span>Обери набір:</span>
+                <span>Твоя армія:</span>
                 <select id="teamSelect"></select>
             </div>
-            <button id="joinBtn" class="buyBtn" style="font-size: 16px; padding: 15px;">Увійти в битву</button>
+            <button id="joinBtn" class="buyBtn" style="font-size: 16px;">Увійти в битву</button>
         </div>
 
         <div id="gameArea" style="display: none; width: 100%;">
@@ -87,7 +93,6 @@
                     <div id="gridWrapper"><div id="grid"></div></div>
                     <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
                         <button id="endTurnBtn" class="buyBtn" style="width: auto; padding: 10px 30px;">Завершити хід</button>
-                        <button id="resetBtn" class="buyBtn" style="background: #666; width: auto;">Reset</button>
                     </div>
                 </div>
                 <div class="panel" id="rightPanel"></div>
@@ -97,7 +102,7 @@
 </div>
 
 <div id="units-tab" class="tab-content">
-    <div id="setsContainer" style="max-width: 800px; margin: 0 auto;"></div>
+    <div id="setsContainer" style="max-width: 800px; margin: 0 auto; padding: 20px;"></div>
 </div>
 
 <script type="module">
@@ -112,12 +117,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ТІ САМІ ЮНІТИ, ЩО БУЛИ СПОЧАТКУ
+// ТВОЇ 6 ЮНІТІВ (по 3 на сторону) З КАРТИНКАМИ GITHUB
 const DEFAULT_SET = {
-    name: "За замовчуванням",
+    name: "Початкова Армія",
     units: {
-        inf: {name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000, img1:"https://cdn-icons-png.flaticon.com/512/3225/3225026.png", img2:"https://cdn-icons-png.flaticon.com/512/3225/3225026.png"},
-        arc: {name:"Лучник", speed:2, atk:15, hp:40, range:3, price:60000, img1:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png", img2:"https://cdn-icons-png.flaticon.com/512/3501/3501252.png"}
+        u1: {name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000, img1:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit1.png", img2:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit1.png"},
+        u2: {name:"Лучник", speed:2, atk:15, hp:40, range:3, price:60000, img1:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit2.png", img2:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit2.png"},
+        u3: {name:"Лицар", speed:5, atk:25, hp:70, range:1, price:120000, img1:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p1_unit3.png", img2:"https://raw.githubusercontent.com/zabuzos/beluga/main/img/p2_unit3.png"}
     }
 };
 
@@ -130,34 +136,38 @@ let currentPlayer = 1;
 let selectedUnit = null;
 let buyMode = null;
 
-// Оновлення списку команд
+function saveLocal() { localStorage.setItem('beluga_sets', JSON.stringify(unitSets)); }
+
 function updateTeamSelect() {
     const sel = document.getElementById('teamSelect');
-    if(!sel) return;
     sel.innerHTML = unitSets.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
 }
 
-// Логіка входу
 document.getElementById('joinBtn').onclick = async () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
-    const teamIdx = document.getElementById('teamSelect').value;
-    const myTeam = unitSets[teamIdx] || DEFAULT_SET;
+    const myTeam = unitSets[document.getElementById('teamSelect').value] || DEFAULT_SET;
 
-    if(!room) return alert("Введіть код кімнати!");
+    if(!room) return alert("Введіть назву кімнати");
 
     const snap = await get(ref(db, 'games/'+room));
     if(!snap.exists()) {
-        state.playerConfigs = { [playerId]: myTeam };
-        saveFirebase();
+        // Чиста ініціалізація нової кімнати
+        state = { 
+            units: [], 
+            money: {1:500000, 2:500000}, 
+            cities: [{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}],
+            playerConfigs: { [playerId]: myTeam } 
+        };
     } else {
         const d = snap.val();
-        state = d.state || state;
+        state = d.state;
+        if(!state.units) state.units = [];
         if(!state.playerConfigs) state.playerConfigs = {};
         state.playerConfigs[playerId] = myTeam;
-        saveFirebase();
     }
-
+    
+    saveFirebase();
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameArea').style.display = 'block';
     createGrid();
@@ -166,8 +176,9 @@ document.getElementById('joinBtn').onclick = async () => {
 
 function syncFirebase() {
     onValue(ref(db, 'games/'+room), (snap) => {
-        const d = snap.val(); if(!d) return;
+        const d = snap.val(); if(!d || !d.state) return;
         state = d.state;
+        if(!state.units) state.units = [];
         turn = d.turn || 1;
         currentPlayer = d.currentPlayer || 1;
         render();
@@ -192,7 +203,9 @@ function createGrid(){
 
 function cellClick(x, y) {
     if(currentPlayer !== playerId) return;
-    const unit = (state.units || []).find(u => u.x === x && u.y === y);
+    if(!state.units) state.units = []; // Захист від помилки push
+    
+    const unit = state.units.find(u => u.x === x && u.y === y);
     const myConfig = (state.playerConfigs[playerId]?.units || {});
 
     if(buyMode) {
@@ -250,7 +263,7 @@ function renderShop() {
     const draw = (p) => {
         const target = p === 1 ? 'leftPanel' : 'rightPanel';
         const config = state.playerConfigs[p];
-        if(!config) { document.getElementById(target).innerHTML = `<i>Очікування...</i>`; return; }
+        if(!config) { document.getElementById(target).innerHTML = `<i>Очікування P${p}...</i>`; return; }
         let h = `<h4>P${p}: ${config.name}</h4>`;
         Object.keys(config.units).forEach(k => {
             const u = config.units[k];
@@ -273,14 +286,28 @@ document.getElementById('endTurnBtn').onclick = () => {
     state.money[currentPlayer] += 100000;
     state.units.forEach(u => {
         if(u.owner === currentPlayer) {
-            const config = (state.playerConfigs[u.owner]?.units || {})[u.type];
-            u.movePoints = config ? config.speed : 1; u.attacked = false;
+            const cfg = state.playerConfigs[u.owner].units[u.type];
+            u.movePoints = cfg.speed; u.attacked = false;
         }
     });
     saveFirebase();
 };
 
+function renderEditor() {
+    document.getElementById('setsContainer').innerHTML = unitSets.map((s, si) => `
+        <div class="editor-set">
+            <h3>📦 ${s.name}</h3>
+            ${Object.keys(s.units).map(k => `
+                <div class="unit-entry">
+                    <b>${s.units[k].name}</b> — Атака: ${s.units[k].atk}, HP: ${s.units[k].hp}, Ціна: ${s.units[k].price}
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
+
 updateTeamSelect();
+renderEditor();
 </script>
 </body>
 </html>
