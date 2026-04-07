@@ -8,8 +8,27 @@
 <style>
 body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
 #grid {display:grid;grid-template-columns: repeat(18, 60px);} 
-.cell {width:60px;height:60px;border:1px solid #ccc;position:relative;}
-.p1 { background:#d0f0ff; } .p2 { background:#ffd0d0; }
+.cell {
+  width:60px;
+  height:60px;
+  border:1px solid rgba(0,0,0,0.1);
+  position:relative;
+
+  background-image: url('img/ground.png');
+  background-size: cover;
+  background-repeat: repeat;
+
+  opacity: 0.9; /* напівпрозорість */
+}
+  .divider {
+  border-right: 4px dashed black !important;
+}
+  #logo {
+  max-width: 130px;
+  height: auto;
+  margin-bottom: 10px;
+}
+/*.p1 { background:#d0f0ff; } .p2 { background:#ffd0d0; }*/
 .move { background:rgba(0,255,0,0.3); } .future { background:rgba(255,255,0,0.3); }
 .attackBorder {outline:3px solid red;cursor:pointer;}
 .city { background:gold; } .selected { outline:3px solid black; }
@@ -34,7 +53,7 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 <body>
 
 <div id="menu">
-  <h3>Beluga 3 Multiplayer</h3>
+  <img src="img/logo.png" id="logo">
   <input type="text" id="roomInput" placeholder="Назва кімнати" />
   <select id="playerSelect">
     <option value="1">Гравець 1</option>
@@ -105,7 +124,11 @@ function createGrid(){
   for(let y=0;y<height;y++){
     for(let x=0;x<width;x++){
       let d=document.createElement('div');
-      d.className='cell '+(x<9?'p1':'p2');
+      d.className='cell';
+
+if(x === 8){
+  d.classList.add('divider');
+}
       d.dataset.x=x;
       d.dataset.y=y;
       d.onclick=()=>cellClick(x,y);
