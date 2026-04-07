@@ -1,38 +1,119 @@
 <!DOCTYPE html>
+
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Міні-гра – тактична</title>
+
 <style>
-body { font-family: Arial; padding:10px; background:#f5f5f5; display:flex; flex-direction:row; }
-#gameArea { display:flex; flex-direction:column; }
-#shopArea { width:220px; margin-right:10px; }
-.unitCard { border:1px solid #ccc; border-radius:8px; margin-bottom:10px; padding:5px; text-align:center; background:white; }
-.unitCard img { width:100%; height:80px; object-fit:contain; margin-bottom:5px; }
-.unitCard button { background:#4CAF50; color:white; border:none; border-radius:5px; padding:6px 10px; cursor:pointer; margin-top:5px; width:90%; }
-#field { display:grid; grid-template-columns: repeat(18, 40px); grid-template-rows: repeat(10, 40px); gap:2px; }
-.cell { width:40px; height:40px; border:1px solid #aaa; position:relative; background:#eee; }
+body {
+  font-family: Arial;
+  padding:10px;
+  background:#f5f5f5;
+  display:flex;
+  flex-direction:row;
+  flex-wrap: wrap;
+}
+
+/* АДАПТИВ */
+@media (max-width: 900px){
+  body {
+    flex-direction: column;
+  }
+  #shopArea {
+    width:100%;
+  }
+}
+
+/* SHOP */
+#shopArea {
+  width:220px;
+  margin-right:10px;
+}
+
+.unitCard {
+  border:1px solid #ccc;
+  border-radius:8px;
+  margin-bottom:10px;
+  padding:5px;
+  text-align:center;
+  background:white;
+}
+
+.unitCard img {
+  width:100%;
+  height:80px;
+  object-fit:contain;
+  margin-bottom:5px;
+}
+
+.unitCard button {
+  background:#4CAF50;
+  color:white;
+  border:none;
+  border-radius:5px;
+  padding:6px 10px;
+  cursor:pointer;
+  margin-top:5px;
+  width:90%;
+}
+
+/* GAME */
+#gameArea {
+  overflow:auto;
+}
+
+/* поле */
+#field {
+  display:grid;
+  grid-template-columns: repeat(18, 40px);
+  grid-template-rows: repeat(10, 40px);
+  gap:2px;
+}
+
+/* клітинка */
+.cell {
+  width:40px;
+  height:40px;
+  border:1px solid #aaa;
+  position:relative;
+  background:#eee;
+}
+
 .cell.city { background:#ffd; }
-.cell.highlightMove { background: rgba(0,255,0,0.4); }
-.cell.highlightRemain { background: rgba(255,255,0,0.4); }
-.cell.enemy { border:2px solid red; }
-.unitIcon { width:36px; height:36px; position:absolute; top:2px; left:2px; border:2px solid transparent; border-radius:4px; pointer-events:none; }
+
+/* юніт */
+.unitIcon {
+  width:36px;
+  height:36px;
+  position:absolute;
+  top:2px;
+  left:2px;
+  border:2px solid transparent;
+  border-radius:4px;
+  pointer-events:none;
+}
+
 .unitIcon.p1 { border-color:blue; }
 .unitIcon.p2 { border-color:purple; }
-.unitIcon.attackable { cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text y="28">🗡️</text></svg>') 16 16, auto; pointer-events:auto; }
+
 </style>
+
 </head>
+
 <body>
 
 <div id="shopArea">
   <h3>Гравець 1 – Купити юніта</h3>
   <div id="shopP1"></div>
+
   <h3>Гравець 2 – Купити юніта</h3>
   <div id="shopP2"></div>
+
   <div style="margin-top:10px;">
-    💰 Бюджет P1: <span id="budgetP1"></span><br>
-    💰 Бюджет P2: <span id="budgetP2"></span>
+    💰 P1: <span id="budgetP1"></span><br>
+    💰 P2: <span id="budgetP2"></span>
   </div>
 </div>
 
@@ -46,25 +127,25 @@ const rows = 10, cols = 18;
 let budget = {p1:500000, p2:500000};
 let field = [];
 let selectedUnit = null;
-let currentPlayer = 1;
 
-// Юніти
+// Юніти (ГОЛОВНЕ: правильний шлях!)
 let p1Units = [
-  {name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000, img:"img/p1_shooter.png"},
-  {name:"Піхотинець", speed:3, atk:20, hp:50, range:1, price:40000, img:"img/p1_infantry.png"},
-  {name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000, img:"img/p1_cavalry.png"}
+  {name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000, img:"./img/p1_shooter.png"},
+  {name:"Піхотинець", speed:3, atk:20, hp:50, range:1, price:40000, img:"./img/p1_infantry.png"},
+  {name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000, img:"./img/p1_cavalry.png"}
 ];
 
 let p2Units = [
-  {name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000, img:"img/p2_shooter.png"},
-  {name:"Піхотинець", speed:3, atk:20, hp:50, range:1, price:40000, img:"img/p2_infantry.png"},
-  {name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000, img:"img/p2_cavalry.png"}
+  {name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000, img:"./img/p2_shooter.png"},
+  {name:"Піхотинець", speed:3, atk:20, hp:50, range:1, price:40000, img:"./img/p2_infantry.png"},
+  {name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000, img:"./img/p2_cavalry.png"}
 ];
 
-let unitsOnField = []; // {player, unit, x, y, remainingMove, hasAttacked}
+let unitsOnField = [];
 
-// ---------- Ініціалізація поля ----------
+// ---------- Ініціалізація ----------
 const fieldEl = document.getElementById('field');
+
 for(let r=0;r<rows;r++){
   for(let c=0;c<cols;c++){
     const div = document.createElement('div');
@@ -80,62 +161,88 @@ for(let r=0;r<rows;r++){
 // ---------- Міста ----------
 const p1Cities = [{x:1,y:1},{x:2,y:1}];
 const p2Cities = [{x:cols-2,y:rows-2},{x:cols-3,y:rows-2}];
+
 p1Cities.forEach(c=>getCell(c.x,c.y).classList.add('city'));
 p2Cities.forEach(c=>getCell(c.x,c.y).classList.add('city'));
 
-// ---------- UI Покупка ----------
+// ---------- SHOP ----------
 function renderShop(){
   const shop1 = document.getElementById('shopP1');
   shop1.innerHTML = '';
+
   p1Units.forEach((u,i)=>{
-    const div = document.createElement('div'); div.className='unitCard';
-    div.innerHTML=`<b>${u.name}</b><br>
-      <img src="${u.img}"><br>
-      ⚡${u.speed} 🗡${u.atk} ❤️${u.hp} 🎯${u.range}<br>
+    const div = document.createElement('div');
+    div.className='unitCard';
+    div.innerHTML=`
+      <b>${u.name}</b><br>
+      <img src="${u.img}" onerror="this.style.display='none'"><br>
+      ⚡${u.speed} 🗡${u.atk} ❤️${u.hp}<br>
       💰${formatMoney(u.price)}<br>
-      <button onclick="buyUnit(1,${i})">Купити</button>`;
+      <button onclick="buyUnit(1,${i})">Купити</button>
+    `;
     shop1.appendChild(div);
   });
+
   const shop2 = document.getElementById('shopP2');
   shop2.innerHTML = '';
+
   p2Units.forEach((u,i)=>{
-    const div = document.createElement('div'); div.className='unitCard';
-    div.innerHTML=`<b>${u.name}</b><br>
-      <img src="${u.img}"><br>
-      ⚡${u.speed} 🗡${u.atk} ❤️${u.hp} 🎯${u.range}<br>
+    const div = document.createElement('div');
+    div.className='unitCard';
+    div.innerHTML=`
+      <b>${u.name}</b><br>
+      <img src="${u.img}" onerror="this.style.display='none'"><br>
+      ⚡${u.speed} 🗡${u.atk} ❤️${u.hp}<br>
       💰${formatMoney(u.price)}<br>
-      <button onclick="buyUnit(2,${i})">Купити</button>`;
+      <button onclick="buyUnit(2,${i})">Купити</button>
+    `;
     shop2.appendChild(div);
   });
+
   document.getElementById('budgetP1').innerText=formatMoney(budget.p1);
   document.getElementById('budgetP2').innerText=formatMoney(budget.p2);
 }
 
-// ---------- Купити юніта ----------
+// ---------- Купити ----------
 function buyUnit(player,index){
   const unit = player===1?p1Units[index]:p2Units[index];
-  if(budget[player===1?'p1':'p2']<unit.price){ alert("Не вистачає грошей!"); return; }
-  alert(`Виберіть клітинку на полі для нового юніта (P${player})`);
+  if(budget[player===1?'p1':'p2']<unit.price){
+    alert("Не вистачає грошей!");
+    return;
+  }
+  alert(`Клікни клітинку для юніта (P${player})`);
   selectedUnit = {player, unit, placing:true};
 }
 
-// ---------- Клітинка ----------
+// ---------- Клік ----------
 function cellClick(r,c){
-  const cell = getCell(c,r);
   if(selectedUnit && selectedUnit.placing){
-    const inOwnArea = selectedUnit.player===1?r<rows/2:r>=rows/2;
-    if(!inOwnArea){ alert("Можна ставити тільки у своїй зоні!"); return; }
-    unitsOnField.push({player:selectedUnit.player, unit:selectedUnit.unit, x:c, y:r, remainingMove:selectedUnit.unit.speed, hasAttacked:false});
+    const inOwnArea = selectedUnit.player===1 ? r<rows/2 : r>=rows/2;
+
+    if(!inOwnArea){
+      alert("Став тільки на своїй половині!");
+      return;
+    }
+
+    unitsOnField.push({
+      player:selectedUnit.player,
+      unit:selectedUnit.unit,
+      x:c,
+      y:r
+    });
+
     budget[selectedUnit.player===1?'p1':'p2']-=selectedUnit.unit.price;
     selectedUnit=null;
+
     renderField();
     renderShop();
   }
 }
 
-// ---------- Рендер поля ----------
+// ---------- Рендер ----------
 function renderField(){
-  field.forEach(cell=>cell.innerHTML=''); // очистка
+  field.forEach(cell=>cell.innerHTML='');
+
   unitsOnField.forEach(u=>{
     const cell = getCell(u.x,u.y);
     const img = document.createElement('img');
@@ -152,6 +259,7 @@ function formatMoney(n){ return Math.round(n/1000)+'к'; }
 // ---------- Старт ----------
 renderShop();
 renderField();
+
 </script>
 
 </body>
