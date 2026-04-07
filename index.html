@@ -30,9 +30,9 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
 }
 
 @media (max-width: 768px) {
-  #gridWrapper {
-    transform: scale(1); /* спочатку без зменшення */
-    width: 100vw;        /* на всю ширину */
+   #gridWrapper {
+    transform: scale(0.5);  /* трохи менше */
+    width: 100vw;
   }
 
   #grid {
@@ -52,8 +52,12 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
     align-items: center;
   }
 
-  .panel {
-    width: 90%;
+   .panel {
+    width: 95%;                 /* на всю ширину майже */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
+    gap: 4px;                   /* мінімальний відступ */
+    margin-bottom: 10px;
   }
 }
   /* === MOBILE SHOP GRID 3 COLUMNS === */
