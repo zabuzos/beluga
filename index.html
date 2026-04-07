@@ -29,9 +29,27 @@ body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;
   margin-bottom: 10px;
     align: center;
 }
+  .hitFlash {
+  animation: hitFlashAnim 0.2s ease;
+}
+
+@keyframes hitFlashAnim {
+  0% { background: rgba(255,0,0,0.7); }
+  100% { background: transparent; }
+}
 /*.p1 { background:#d0f0ff; } .p2 { background:#ffd0d0; }*/
 .move { background:rgba(0,255,0,0.3); } .future { background:rgba(255,255,0,0.3); }
-.attackBorder {outline:3px solid red;cursor:pointer;}
+.attackBorder {
+  outline:3px solid red;
+  cursor: pointer;
+}
+
+.attackBorder:hover {
+  cursor: url('data:image/svg+xml;utf8,\
+  <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\">\
+  <text y=\"24\" font-size=\"24\">⚔️</text>\
+  </svg>') 0 24, auto;
+}
 .city { background:gold; } .selected { outline:3px solid black; }
 .unitImg {width:100%;height:100%;object-fit:contain;border-radius:6px;}
 .unitP1 { outline:3px solid #2196F3; } .unitP2 { outline:3px solid #f44336; }
@@ -239,8 +257,20 @@ function moveUnit(u,x,y){
 function attackUnit(a,d){
   let t=unitTypes[a.type];
   let dx=Math.abs(a.x-d.x); let dy=Math.abs(a.y-d.y);
-  if(Math.max(dx,dy)<=t.range){ d.hp-=t.atk; a.attacked=true;
-    if(d.hp<=0){ state.units = state.units.filter(u=>u!==d); }
+
+  if(Math.max(dx,dy)<=t.range){
+
+    // 🔴 ефект удару
+    let cell = getCell(d.x,d.y);
+    cell.classList.add('hitFlash');
+    setTimeout(()=>cell.classList.remove('hitFlash'), 200);
+
+    d.hp-=t.atk;
+    a.attacked=true;
+
+    if(d.hp<=0){
+      state.units = state.units.filter(u=>u!==d);
+    }
   }
 }
 
