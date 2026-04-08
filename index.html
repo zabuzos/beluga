@@ -121,14 +121,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const INITIAL_ARMY = {
-    name: "Стандартна (GitHub)",
-    units: {
-        u1: { name: "Піхота", speed: 3, atk: 20, hp: 50, range: 1, price: 40000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p1.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p2.png" },
-        u2: { name: "Лучник", speed: 2, atk: 15, hp: 40, range: 3, price: 60000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/shooter_p1.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/shooter_p2.png" },
-        u3: { name: "Лицар", speed: 5, atk: 25, hp: 70, range: 1, price: 120000, img1: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/cavalry_p1.png", img2: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/cavalry_p2.png" }
-    }
-};
+let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [];
+if (userArmies.length === 0) {
+    userArmies = [INITIAL_ARMY];
+    localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies));
+}
 
 let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [INITIAL_ARMY];
 let state = { units: [], money: {1: 500000, 2: 500000}, cities: [], playerConfigs: {} };
