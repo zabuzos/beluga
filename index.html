@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle</title>
+    <title>Beluga Battle - Unique Races</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 15px; }
         .nav { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
@@ -134,6 +134,12 @@ window.addNewArmy = () => {
     if(name) { userArmies.push({ name, units: {} }); saveAndRefresh(); }
 };
 
+window.updateArmyName = (armyIdx, newName) => {
+    userArmies[armyIdx].name = newName;
+    localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies));
+    updateTeamList(); // Щоб в меню вибору раси ім'я змінилося одразу
+};
+
 window.addUnitToArmy = (armyIdx) => {
     const id = 'u' + Date.now();
     userArmies[armyIdx].units[id] = { name: "Воїн", speed: 3, atk: 10, hp: 100, range: 1, price: 50000, img: "" };
@@ -162,8 +168,12 @@ function renderArmyEditor() {
     const container = document.getElementById('armyList');
     container.innerHTML = userArmies.map((army, aIdx) => `
         <div class="editor-set" style="margin-bottom:30px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 style="color:#f1c40f; margin:0;">🛡️ Раса: ${army.name}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                    <span style="font-size:20px;">🛡️</span>
+                    <input type="text" value="${army.name}" onchange="updateArmyName(${aIdx}, this.value)" 
+                        style="background:none; color:#f1c40f; border:none; border-bottom:1px dashed #f1c40f; font-size:18px; font-weight:bold; width:200px; padding:2px;">
+                </div>
                 <button onclick="deleteArmy(${aIdx})" style="color:#ff4757; background:none; border:1px solid #ff4757; padding:5px 10px; border-radius:4px; cursor:pointer;">Видалити расу</button>
             </div>
             ${Object.keys(army.units).map(uId => `
