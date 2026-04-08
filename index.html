@@ -304,11 +304,27 @@ function render() {
         const myRace = state.playerConfigs[u.owner];
         const config = myRace?.units[u.type];
         if(!cell || !config) return;
-        const img = document.createElement('img');
-        img.src = config.img;
-        img.className = 'unitImg ' + (u.owner === 1 ? 'unitP1' : 'unitP2');
-        cell.appendChild(img);
-        const hp = document.createElement('div'); hp.className = 'hp'; hp.innerText = u.hp; cell.appendChild(hp);
+
+        // Перевірка: якщо картинки немає, ставимо іконку-заглушку
+        if (config.img && config.img.trim() !== "") {
+            const img = document.createElement('img');
+            img.src = config.img;
+            img.className = 'unitImg ' + (u.owner === 1 ? 'unitP1' : 'unitP2');
+            // Обробка помилки 404 для картинки
+            img.onerror = function() {
+                this.style.display = 'none';
+                cell.innerHTML += u.owner === 1 ? '🟦' : '🟥';
+            };
+            cell.appendChild(img);
+        } else {
+            cell.innerHTML += u.owner === 1 ? '🟦' : '🟥';
+        }
+
+        const hp = document.createElement('div'); 
+        hp.className = 'hp'; 
+        hp.innerText = u.hp; 
+        cell.appendChild(hp);
+        
         if(u === selectedUnit) cell.classList.add('selected');
     });
     renderShop();
