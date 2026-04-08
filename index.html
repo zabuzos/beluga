@@ -1,353 +1,427 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle - Pro Edition</title>
-    <style>
-        body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 15px; }
-        .nav { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
-        .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: #95a5a6; border-radius: 8px; font-weight: bold; font-size: 16px; }
-        .tab-btn.active { background: #3498db; color: white; }
-        .tab-content { display: none; }
-        #gridWrapper { overflow: auto; border: 5px solid #000; border-radius: 12px; background-image: url('https://raw.githubusercontent.com/zabuzos/beluga/main/img/ground.png'); background-size: 60px 60px; width: fit-content; margin: 0 auto; max-width: 100%; }
-        #grid { display: grid; grid-template-columns: repeat(18, 60px); background: rgba(0,0,0,0.2); }
-        .cell { width: 60px; height: 60px; border: 1px solid rgba(255,255,255,0.1); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 35px; }
-        .divider { border-right: 4px dashed gold !important; }
-        #menu { background: #34495e; padding: 30px; border-radius: 20px; text-align: center; max-width: 450px; margin: 40px auto; }
-        .panel { width: 280px; min-height: 450px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; }
-        .card { background: #ecf0f1; color: #333; padding: 10px; margin-bottom: 15px; border-radius: 10px; text-align: center; font-size: 13px; border-bottom: 4px solid #bdc3c7; }
-        .shopImg { width: 100%; height: 65px; object-fit: contain; background: #ddd; border-radius: 5px; margin: 5px 0; }
-        .unitImg { width: 85%; height: 85%; object-fit: contain; position: absolute; pointer-events: none; z-index: 2; }
-        .hp { position: absolute; bottom: 4px; right: 4px; font-size: 11px; background: red; color: white; padding: 1px 4px; border-radius: 3px; z-index: 3; }
-        .btn { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        .btn:disabled { background: #7f8c8d; cursor: not-allowed; }
-        .btn-reset { background: #e74c3c; margin-top: 15px; max-width: 200px; }
-        .unit-edit-card { background: #34495e; padding: 10px; border-radius: 8px; border: 1px solid #555; position: relative; margin-bottom: 10px; }
-        .unit-edit-card input { background: #2c3e50; color: white; border: 1px solid #444; padding: 4px; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 5px; font-size: 12px; }
-        input, select { background: #34495e; color: white; border: 1px solid #555; padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .city { background: rgba(241, 196, 15, 0.4) !important; border: 2px solid gold !important; }
-        .selected { outline: 4px solid white; box-shadow: 0 0 20px white; z-index: 5; }
-        .can-attack { outline: 2px solid #e74c3c; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beluga 3 Multiplayer v2 </title>
+<style>
+body {font-family: Arial;background:#f0f0f0;display:flex;justify-content:center;gap:20px;flex-wrap: wrap;}
+#grid {display:grid;grid-template-columns: repeat(18, 60px);} 
+.cell {
+&nbsp;&nbsp;width:60px;
+&nbsp;&nbsp;height:60px;
+&nbsp;&nbsp;border:1px solid rgba(0,0,0,0.1);
+&nbsp;&nbsp;position:relative;
+
+&nbsp;&nbsp;background-image: url('img/ground.png');
+&nbsp;&nbsp;background-size: cover;
+&nbsp;&nbsp;background-repeat: repeat;
+
+&nbsp;&nbsp;opacity: 0.9; /* напівпрозорість */
+}
+&nbsp;&nbsp;/* Основні панелі залишаються 220px на ПК */
+.panel {
+&nbsp;&nbsp;width: 220px;
+}
+
+/* Мобільні стилі */
+@media (max-width: 768px) {
+&nbsp;&nbsp;.panel {
+&nbsp;&nbsp;&nbsp;&nbsp;width: 95%;                 /* на всю ширину майже */
+&nbsp;&nbsp;&nbsp;&nbsp;display: grid;
+&nbsp;&nbsp;&nbsp;&nbsp;grid-template-columns: repeat(3, 1fr); /* 3 блоки в ряд */
+&nbsp;&nbsp;&nbsp;&nbsp;gap: 10px;                   /* мінімальний відступ */
+&nbsp;&nbsp;&nbsp;&nbsp;margin-bottom: 10px;
+&nbsp;&nbsp;}
+}
+
+&nbsp;&nbsp;/* === MOBILE OPTIMIZATION + BONUS SCROLL === */
+/* === MOBILE FULL WIDTH === */
+#gridWrapper {
+&nbsp;&nbsp;overflow: auto;
+&nbsp;&nbsp;max-width: 100vw;
+&nbsp;&nbsp;margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+&nbsp;&nbsp;&nbsp;#gridWrapper {
+&nbsp;&nbsp;&nbsp;&nbsp;transform: scale(1);  /* трохи менше */
+&nbsp;&nbsp;&nbsp;&nbsp;width: 100vw;
+&nbsp;&nbsp;}
+#leftPanel {
+&nbsp;&nbsp;width: 100%}
+&nbsp;&nbsp;#rightPanel {
+&nbsp;&nbsp;width: 100%}
+
+&nbsp;#grid {
+&nbsp;&nbsp;&nbsp;&nbsp;grid-template-columns: repeat(18, 40px); /* менші клітинки на телефоні */
+&nbsp;&nbsp;}
+&nbsp;&nbsp;.cell {
+&nbsp;&nbsp;&nbsp;&nbsp;width: 40px;
+&nbsp;&nbsp;&nbsp;&nbsp;height: 40px;  /* квадратні */
+&nbsp;&nbsp;}
+
+&nbsp;&nbsp;body {
+&nbsp;&nbsp;&nbsp;&nbsp;flex-direction: column;
+&nbsp;&nbsp;&nbsp;&nbsp;align-items: center;
+&nbsp;&nbsp;}
+
+}
+&nbsp;&nbsp;/* === MOBILE SHOP GRID 3 COLUMNS === */
+@media (max-width: 768px) {
+
+&nbsp;&nbsp;.shopCard {
+&nbsp;&nbsp;&nbsp;&nbsp;width: 100%; /* кожна картка займає всю долю колонки */
+&nbsp;&nbsp;&nbsp;&nbsp;margin: 0;
+&nbsp;&nbsp;}
+
+&nbsp;&nbsp;.shopImg {
+&nbsp;&nbsp;&nbsp;&nbsp;height: 80px; /* трохи менше для мобільних */
+&nbsp;&nbsp;}
+
+&nbsp;&nbsp;.title, .stats, .price, .buyBtn {
+&nbsp;&nbsp;&nbsp;&nbsp;font-size: 12px; /* зменшимо шрифт на мобільному */
+&nbsp;&nbsp;}
+
+&nbsp;&nbsp;.buyBtn {
+&nbsp;&nbsp;&nbsp;&nbsp;padding: 6px;
+&nbsp;&nbsp;}
+}
+&nbsp;&nbsp;
+&nbsp;&nbsp;.divider {
+&nbsp;&nbsp;border-right: 4px dashed black !important;
+}
+&nbsp;&nbsp;#logo {
+&nbsp;&nbsp;max-width: 230px;
+&nbsp;&nbsp;height: auto;
+&nbsp;&nbsp;margin-bottom: 10px;
+&nbsp;&nbsp;&nbsp;&nbsp;align: center;
+}
+&nbsp;&nbsp;.hitFlash {
+&nbsp;&nbsp;animation: hitFlashAnim 0.2s ease;
+}
+
+@keyframes hitFlashAnim {
+&nbsp;&nbsp;0% { background: rgba(255,0,0,0.7); }
+&nbsp;&nbsp;100% { background: transparent; }
+}
+/*.p1 { background:#d0f0ff; } .p2 { background:#ffd0d0; }*/
+.move { background:rgba(0,255,0,0.3); } .future { background:rgba(255,255,0,0.3); }
+.attackBorder {
+&nbsp;&nbsp;outline:3px solid red;
+&nbsp;&nbsp;cursor: pointer;
+}
+
+.attackBorder:hover {
+&nbsp;&nbsp;cursor: url('data:image/svg+xml;utf8,\
+&nbsp;&nbsp;<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\">\
+&nbsp;&nbsp;<text y=\"24\" font-size=\"24\">⚔️</text>\
+&nbsp;&nbsp;</svg>') 0 24, auto;
+}
+.city { background:gold; } .selected { outline:3px solid black; }
+.unitImg {width:100%;height:100%;object-fit:contain;border-radius:6px;}
+.unitP1 { outline:3px solid #2196F3; } .unitP2 { outline:3px solid #f44336; }
+.hp {position:absolute;bottom:2px;right:2px;font-size:12px;color:white;background:rgba(0,0,0,0.6);padding:2px;}
+.mp {position:absolute;top:2px;left:2px;font-size:11px;background:white;padding:1px 3px;border-radius:4px;}
+.panel { width:220px; }
+.card {background:white;padding:10px;margin-bottom:12px;border-radius:10px;}
+.shopCard { text-align:center; }
+.shopImg {width:100%;height:110px;object-fit:contain;margin:6px 0;}
+.title {font-weight:bold;margin-bottom:4px;} .stats {font-size:14px;margin-bottom:4px;} .price {font-weight:bold;margin-bottom:6px;}
+.buyBtn {background: linear-gradient(180deg, #4CAF50, #2e7d32);border: none;border-radius: 8px;padding: 8px;color: white;font-weight: bold;cursor: pointer;width:100%;}
+.buyBtn:hover { transform: scale(1.05); }
+.buyBtn:active { transform: scale(0.95); }
+.buyBtn:disabled {background: #999;cursor: not-allowed;}
+#menu {width: 100%;text-align: center;margin-bottom: 10px;}
+#turnPanel {text-align: center;margin-bottom: 10px;}
+</style>
 </head>
 <body>
-
-<div class="nav">
-    <button class="tab-btn active" onclick="window.openTab(event, 'game-tab')">ГРАТИ</button>
-    <button class="tab-btn" onclick="window.openTab(event, 'army-tab')">АРМІЯ</button>
+<div><img src="img/logo.png" id="logo"></div>
+<div id="menu">
+&nbsp;&nbsp;
+&nbsp;&nbsp;<input type="text" id="roomInput" placeholder="Назва кімнати" />
+&nbsp;&nbsp;<select id="playerSelect">
+&nbsp;&nbsp;&nbsp;&nbsp;<option value="1">Гравець 1</option>
+&nbsp;&nbsp;&nbsp;&nbsp;<option value="2">Гравець 2</option>
+&nbsp;&nbsp;</select>
+&nbsp;&nbsp;<button id="joinBtn">Приєднатися</button>
 </div>
+<div class="panel" id="leftPanel"></div>
+<div>
+&nbsp;&nbsp;<div id="turnPanel">
+&nbsp;&nbsp;&nbsp;&nbsp;<h3>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Хід: <span id="turn"></span> |
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Гравець: <span id="player"></span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💰 P1: <span id="money1"></span> |
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P2: <span id="money2"></span>
+&nbsp;&nbsp;&nbsp;&nbsp;</h3>
+&nbsp;&nbsp;</div> <div id="gridWrapper">
+  <div id="grid"></div>
 
-<div id="game-tab" class="tab-content" style="display: block;">
-    <div id="menu">
-        <h1 style="color: #f1c40f;">⚔️ BELUGA BATTLE</h1>
-        <input type="text" id="roomInput" placeholder="Код кімнати">
-        <select id="playerSelect">
-            <option value="1">Гравець 1 (Сині - Зліва)</option>
-            <option value="2">Гравець 2 (Червоні - Справа)</option>
-        </select>
-        <select id="teamSelect"></select>
-        <button class="btn" id="joinBtn">УВІЙТИ В БИТВУ</button>
-    </div>
-    <div id="gameArea" style="display: none;">
-        <div style="display:flex; justify-content:center; gap:20px;">
-            <div class="panel" id="leftPanel"></div>
-            <div style="text-align: center;">
-                <div id="turnPanel" style="background:#34495e; padding:10px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Хід: <b id="turn">1</b> | P<b id="playerDisplay">1</b> | 💰 <b id="myMoney">0</b>к</span>
-                    <button id="endTurnBtn" onclick="window.endTurn()" style="background:#e67e22; color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">КІНЕЦЬ ХОДУ</button>
-                </div>
-                <div id="gridWrapper"><div id="grid"></div></div>
-                <button class="btn btn-reset" onclick="window.resetGame()">🔄 НОВА ГРА</button>
-            </div>
-            <div class="panel" id="rightPanel"></div>
-        </div>
-    </div>
 </div>
-
-<div id="army-tab" class="tab-content">
-    <div style="max-width:900px; margin:0 auto; background:#34495e; padding:20px; border-radius:15px;">
-        <button class="btn" onclick="window.addNewArmy()">+ Створити нову расу</button>
-        <div id="armyList" style="margin-top:20px;"></div>
-    </div>
+&nbsp;&nbsp;<button onclick="endTurn()" class="buyBtn" id="endTurnBtn">Закінчити хід</button>
+&nbsp;&nbsp;<button onclick="resetState()" class="buyBtn" style="margin-top:10px;">Нова гра</button>
 </div>
-
+<div class="panel" id="rightPanel"></div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-const firebaseConfig = { apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY", databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com", projectId: "beluga-a7197" };
+const firebaseConfig = {
+&nbsp;&nbsp;apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY",
+&nbsp;&nbsp;authDomain: "beluga-a7197.firebaseapp.com",
+&nbsp;&nbsp;databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com",
+&nbsp;&nbsp;projectId: "beluga-a7197",
+&nbsp;&nbsp;storageBucket: "beluga-a7197.appspot.com",
+&nbsp;&nbsp;messagingSenderId: "1019986290981",
+&nbsp;&nbsp;appId: "1:1019986290981:web:1a0685a543fa63e5a152cc"
+};
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const DEFAULT_RACE = { name: "Люди", units: { u1: { name: "Мечник", speed: 3, atk: 20, hp: 60, range: 1, price: 40000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p1.png" } } };
-let stored = localStorage.getItem('beluga_user_armies');
-window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(stored) : [DEFAULT_RACE];
+const width = 18;
+const height = 10;
 
-let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
-let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null, isGameOver = false;
+let currentPlayer = 1; // чий хід
+let playerId = 1; // хто ти
 
-window.openTab = (e, id) => {
-    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    if(e) e.currentTarget.classList.add('active');
-    if(id === 'army-tab') window.renderArmyEditor();
+let turn = 1;
+let selectedUnit = null;
+let buyMode = null;
+let room = "";
+
+function fm(n){ return (n/1000)+'к'; }
+
+const unitTypes = {
+&nbsp;&nbsp;shooter:{name:"Стрілець", speed:1, atk:15, hp:50, range:3, price:50000,img1:"img/shooter_p1.png",img2:"img/shooter_p2.png"},
+&nbsp;&nbsp;infantry:{name:"Піхота", speed:3, atk:20, hp:50, range:1, price:40000,img1:"img/infantry_p1.png",img2:"img/infantry_p2.png"},
+&nbsp;&nbsp;cavalry:{name:"Кавалерія", speed:4, atk:20, hp:55, range:1, price:120000,img1:"img/cavalry_p1.png",img2:"img/cavalry_p2.png"}
 };
 
-window.updateTeamList = () => {
-    const sel = document.getElementById('teamSelect');
-    if(sel) sel.innerHTML = window.userArmies.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+let state = { units:[], money:{1:500000,2:500000}, cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}] };
+
+function createGrid(){
+&nbsp;&nbsp;let g=document.getElementById('grid'); g.innerHTML='';
+&nbsp;&nbsp;for(let y=0;y<height;y++){
+&nbsp;&nbsp;&nbsp;&nbsp;for(let x=0;x<width;x++){
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let d=document.createElement('div');
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.className='cell';
+
+if(x === 8){
+&nbsp;&nbsp;d.classList.add('divider');
+}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.dataset.x=x;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.dataset.y=y;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d.onclick=()=>cellClick(x,y);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.appendChild(d);
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;}
+}
+
+function getCell(x,y){ return document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`); }
+
+function render(){
+&nbsp;&nbsp;turnEl.innerText=turn;
+&nbsp;&nbsp;playerEl.innerText=currentPlayer;
+&nbsp;&nbsp;money1.innerText=fm(state.money[1]);
+&nbsp;&nbsp;money2.innerText=fm(state.money[2]);
+document.getElementById('endTurnBtn').disabled = currentPlayer !== playerId;
+&nbsp;&nbsp;document.querySelectorAll('.cell').forEach(c=>{ c.innerHTML=''; c.classList.remove('move','future','attackBorder','selected','city'); });
+
+&nbsp;&nbsp;state.cities.forEach(c=>{
+&nbsp;&nbsp;&nbsp;&nbsp;let cell=getCell(c.x,c.y); cell.classList.add('city');
+&nbsp;&nbsp;&nbsp;&nbsp;let icon=document.createElement('div'); icon.innerText="🏰";
+&nbsp;&nbsp;&nbsp;&nbsp;icon.style.position="absolute"; icon.style.top="50%"; icon.style.left="50%";
+&nbsp;&nbsp;&nbsp;&nbsp;icon.style.transform="translate(-50%,-50%)"; icon.style.fontSize="26px";
+&nbsp;&nbsp;&nbsp;&nbsp;cell.appendChild(icon);
+&nbsp;&nbsp;});
+
+&nbsp;&nbsp;state.units.forEach(u=>{
+&nbsp;&nbsp;&nbsp;&nbsp;let cell=getCell(u.x,u.y);
+&nbsp;&nbsp;&nbsp;&nbsp;let img=document.createElement('img');
+&nbsp;&nbsp;&nbsp;&nbsp;img.src = u.owner===1 ? unitTypes[u.type].img1 : unitTypes[u.type].img2;
+&nbsp;&nbsp;&nbsp;&nbsp;img.className='unitImg '+(u.owner===1?'unitP1':'unitP2');
+&nbsp;&nbsp;&nbsp;&nbsp;cell.appendChild(img);
+&nbsp;&nbsp;&nbsp;&nbsp;let hp=document.createElement('div'); hp.className='hp'; hp.innerText=u.hp; cell.appendChild(hp);
+&nbsp;&nbsp;&nbsp;&nbsp;let mp=document.createElement('div'); mp.className='mp'; mp.innerText=u.movePoints; cell.appendChild(mp);
+&nbsp;&nbsp;&nbsp;&nbsp;if(u===selectedUnit) cell.classList.add('selected');
+&nbsp;&nbsp;});
+
+&nbsp;&nbsp;if(selectedUnit){ highlightMoves(selectedUnit); highlightAttacks(selectedUnit); }
+&nbsp;&nbsp;renderPanels();
+}
+
+function renderPanels(){
+&nbsp;&nbsp;let html1='', html2='';
+&nbsp;&nbsp;Object.keys(unitTypes).forEach(k=>{
+&nbsp;&nbsp;&nbsp;&nbsp;let u = unitTypes[k];
+&nbsp;&nbsp;&nbsp;&nbsp;html1+=`<div class='card shopCard'><div class="title">${u.name}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="${u.img1}" class="shopImg">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="price">💰 ${fm(u.price)}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="buyBtn" onclick="startBuy('${k}',1)" ${currentPlayer!==1?'disabled':''}>Купити</button></div>`;
+&nbsp;&nbsp;&nbsp;&nbsp;html2+=`<div class='card shopCard'><div class="title">${u.name}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="${u.img2}" class="shopImg">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="stats">🏃 ${u.speed} ⚔️ ${u.atk} ❤️ ${u.hp} 🎯 ${u.range}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="price">💰 ${fm(u.price)}</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="buyBtn" onclick="startBuy('${k}',2)" ${currentPlayer!==2?'disabled':''}>Купити</button></div>`;
+&nbsp;&nbsp;});
+&nbsp;&nbsp;leftPanel.innerHTML=html1; rightPanel.innerHTML=html2;
+}
+
+// ===== FIXED BUY LOGIC =====
+// ВАЖЛИВО: робимо функції глобальними для onclick
+window.startBuy = function(type, player){
+&nbsp;&nbsp;if(player !== playerId) return;
+&nbsp;&nbsp;buyMode = type;
 };
 
-window.saveAndRefresh = () => {
-    localStorage.setItem('beluga_user_armies', JSON.stringify(window.userArmies));
-    window.updateTeamList(); window.renderArmyEditor();
-};
+window.endTurn = endTurn;
+window.resetState = resetState;
+function startBuy(type, player){
+&nbsp;&nbsp;if(player !== playerId) return; // тепер перевірка хто ти
+&nbsp;&nbsp;buyMode = type;
+}
 
-window.addNewArmy = () => {
-    const n = prompt("Назва:"); if(n) { window.userArmies.push({name: n, units: {}}); window.saveAndRefresh(); }
-};
+function isOwnSide(x){ return playerId===1?x<9:x>=9; }
 
-window.renderArmyEditor = () => {
-    const list = document.getElementById('armyList');
-    list.innerHTML = window.userArmies.map((army, aIdx) => `
-        <div style="background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; margin-bottom:30px; border: 2px solid #444;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <input type="text" value="${army.name}" onchange="window.userArmies[${aIdx}].name=this.value; window.saveAndRefresh()" style="font-size:18px; color:gold; background:none; border:none; width:50%;">
-                <button onclick="if(confirm('Видалити расу?')){window.userArmies.splice(${aIdx},1); window.saveAndRefresh()}" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
-            </div>
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:10px;">
-                ${Object.keys(army.units || {}).map(uId => `
-                    <div class="unit-edit-card">
-                        <button onclick="delete window.userArmies[${aIdx}].units['${uId}']; window.saveAndRefresh()" style="position:absolute;top:2px;right:2px;border:none;background:none;color:red;cursor:pointer;">✕</button>
-                        <input type="text" value="${army.units[uId].name}" onchange="window.userArmies[${aIdx}].units['${uId}'].name=this.value; window.saveAndRefresh()">
-                        <div style="display:flex;gap:2px;">
-                            <input type="number" placeholder="HP" title="HP" value="${army.units[uId].hp}" onchange="window.userArmies[${aIdx}].units['${uId}'].hp=Number(this.value); window.saveAndRefresh()">
-                            <input type="number" placeholder="ATK" title="ATK" value="${army.units[uId].atk}" onchange="window.userArmies[${aIdx}].units['${uId}'].atk=Number(this.value); window.saveAndRefresh()">
-                        </div>
-                        <div style="display:flex;gap:2px;">
-                            <input type="number" placeholder="SPD" title="Швидкість" value="${army.units[uId].speed}" onchange="window.userArmies[${aIdx}].units['${uId}'].speed=Number(this.value); window.saveAndRefresh()">
-                            <input type="number" placeholder="RNG" title="Дальність" value="${army.units[uId].range || 1}" onchange="window.userArmies[${aIdx}].units['${uId}'].range=Number(this.value); window.saveAndRefresh()">
-                        </div>
-                        <input type="number" placeholder="💰" title="Ціна" value="${army.units[uId].price}" onchange="window.userArmies[${aIdx}].units['${uId}'].price=Number(this.value); window.saveAndRefresh()">
-                        <input type="text" placeholder="URL Img" value="${army.units[uId].img}" onchange="window.userArmies[${aIdx}].units['${uId}'].img=this.value; window.saveAndRefresh()">
-                    </div>
-                `).join('')}
-                <div style="border:1px dashed #666; height:100px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="const id='u'+Date.now(); window.userArmies[${aIdx}].units[id]={name:'Новий',speed:3,atk:10,hp:50,range:1,price:30000,img:''}; window.saveAndRefresh()">+</div>
-            </div>
-        </div>
-    `).join('');
-};
+function cellClick(x,y){
 
-document.getElementById('joinBtn').onclick = async () => {
-    room = document.getElementById('roomInput').value.trim();
-    playerId = parseInt(document.getElementById('playerSelect').value);
-    const armyIdx = document.getElementById('teamSelect').value;
-    if(!room || !window.userArmies[armyIdx]) return alert("Дані вказано невірно!");
+&nbsp;&nbsp;// ❗ блокуємо якщо не твій хід
+&nbsp;&nbsp;if(currentPlayer !== playerId) return;
 
-    const myChoice = window.userArmies[armyIdx];
-    const roomRef = ref(db, 'games/'+room);
-    const snap = await get(roomRef);
-    
-    if(!snap.exists()) {
-        state = { units: [], money: {1:500000, 2:500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
-        state.playerConfigs[playerId] = myChoice;
-        await set(roomRef, { state, turn: 1, currentPlayer: 1 });
-    } else {
-        const d = snap.val(); state = d.state; 
-        if(!state.playerConfigs) state.playerConfigs = {};
-        state.playerConfigs[playerId] = myChoice;
-        await set(ref(db, `games/${room}/state/playerConfigs/${playerId}`), myChoice);
-    }
+&nbsp;&nbsp;let unit = state.units.find(u=>u.x===x&&u.y===y);
 
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('gameArea').style.display = 'block';
-    window.createGrid();
+&nbsp;&nbsp;if(buyMode){
+&nbsp;&nbsp;&nbsp;&nbsp;if(unit || !isOwnSide(x)) return;
 
-    onValue(roomRef, (s) => {
-        const d = s.val(); if(!d) return;
-        state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
-        window.render(); window.checkWin();
-    });
-};
+&nbsp;&nbsp;&nbsp;&nbsp;let u = unitTypes[buyMode];
+&nbsp;&nbsp;&nbsp;&nbsp;if(state.money[playerId] < u.price) return;
 
-window.saveGame = () => set(ref(db, 'games/'+room), { state, turn, currentPlayer });
+&nbsp;&nbsp;&nbsp;&nbsp;state.money[playerId] -= u.price;
+&nbsp;&nbsp;&nbsp;&nbsp;state.units.push({
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x,y,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;owner:playerId,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type:buyMode,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hp:u.hp,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;movePoints:0,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attacked:true
+&nbsp;&nbsp;&nbsp;&nbsp;});
 
-window.resetGame = async () => {
-    if(!confirm("Скинути поле?")) return;
-    state.units = []; state.money = {1:500000, 2:500000};
-    turn = 1; currentPlayer = 1; isGameOver = false; buyMode = null; selectedUnit = null;
-    await window.saveGame();
-};
+&nbsp;&nbsp;&nbsp;&nbsp;buyMode = null;
+&nbsp;&nbsp;&nbsp;&nbsp;saveState();
+&nbsp;&nbsp;&nbsp;&nbsp;render();
+&nbsp;&nbsp;&nbsp;&nbsp;return;
+&nbsp;&nbsp;}
 
-window.createGrid = () => {
-    const g = document.getElementById('grid'); g.innerHTML = '';
-    for(let y=0; y<10; y++) {
-        for(let x=0; x<18; x++) {
-            const d = document.createElement('div'); d.className = 'cell';
-            if(x === 8) d.classList.add('divider');
-            d.id = `c-${x}-${y}`; d.onclick = () => window.cellClick(x, y);
-            g.appendChild(d);
-        }
-    }
-};
+&nbsp;&nbsp;// ✅ вибір тільки своїх юнітів
+&nbsp;&nbsp;if(unit && unit.owner === playerId){
+&nbsp;&nbsp;&nbsp;&nbsp;selectedUnit = unit;
+&nbsp;&nbsp;&nbsp;&nbsp;render();
+&nbsp;&nbsp;&nbsp;&nbsp;return;
+&nbsp;&nbsp;}
 
-window.cellClick = (x, y) => {
-    if(currentPlayer !== playerId || isGameOver) return;
-    const unitAtCell = state.units.find(u => u.x === x && u.y === y);
+&nbsp;&nbsp;// ✅ атака тільки ворога
+&nbsp;&nbsp;if(unit && unit.owner !== playerId && selectedUnit && !selectedUnit.attacked){
+&nbsp;&nbsp;&nbsp;&nbsp;attackUnit(selectedUnit, unit);
+&nbsp;&nbsp;&nbsp;&nbsp;saveState();
+&nbsp;&nbsp;&nbsp;&nbsp;render();
+&nbsp;&nbsp;&nbsp;&nbsp;return;
+&nbsp;&nbsp;}
 
-    // КУПІВЛЯ
-    if(buyMode) {
-        const myRace = state.playerConfigs[playerId];
-        const cfg = myRace.units[buyMode];
-        const isMyHalf = (playerId === 1 && x < 9) || (playerId === 2 && x >= 9);
-        if(!unitAtCell && isMyHalf && state.money[playerId] >= cfg.price) {
-            state.money[playerId] -= cfg.price;
-            state.units.push({ 
-                x, y, owner: playerId, type: buyMode, hp: cfg.hp, 
-                movePoints: 0, hasAttacked: true, id: Date.now() 
-            });
-            window.saveGame();
-            // buyMode НЕ скидаємо, щоб можна було купувати далі
-        } else if (unitAtCell || !isMyHalf) {
-            buyMode = null; // Скасувати покупку при натисканні на чуже поле або юніта
-            window.render();
-        }
-        return;
-    }
+&nbsp;&nbsp;// рух
+&nbsp;&nbsp;if(selectedUnit && selectedUnit.movePoints > 0){
+&nbsp;&nbsp;&nbsp;&nbsp;if(state.units.some(u=>u.x===x && u.y===y)) return;
+&nbsp;&nbsp;&nbsp;&nbsp;moveUnit(selectedUnit, x, y);
+&nbsp;&nbsp;&nbsp;&nbsp;saveState();
+&nbsp;&nbsp;&nbsp;&nbsp;render();
+&nbsp;&nbsp;}
+}
 
-    // ВИБІР СВОГО ЮНІТА
-    if(unitAtCell && unitAtCell.owner === playerId) {
-        selectedUnit = (selectedUnit === unitAtCell) ? null : unitAtCell;
-        window.render();
-        return;
-    }
+function moveUnit(u,x,y){
+&nbsp;&nbsp;let dx=Math.abs(u.x-x); let dy=Math.abs(u.y-y); let dist=Math.max(dx,dy);
+&nbsp;&nbsp;if(dist<=u.movePoints){ u.movePoints-=dist; u.x=x; u.y=y; }
+}
 
-    // АТАКА ВОРОГА
-    if(selectedUnit && unitAtCell && unitAtCell.owner !== playerId) {
-        const cfg = state.playerConfigs[playerId].units[selectedUnit.type];
-        const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
-        if(!selectedUnit.hasAttacked && dist <= (cfg.range || 1)) {
-            unitAtCell.hp -= cfg.atk;
-            selectedUnit.hasAttacked = true;
-            if(unitAtCell.hp <= 0) {
-                state.units = state.units.filter(u => u !== unitAtCell);
-            }
-            window.saveGame();
-        }
-        return;
-    }
+function attackUnit(a,d){
+&nbsp;&nbsp;let t=unitTypes[a.type];
+&nbsp;&nbsp;let dx=Math.abs(a.x-d.x); let dy=Math.abs(a.y-d.y);
 
-    // ПЕРЕМІЩЕННЯ
-    if(selectedUnit && !unitAtCell) {
-        const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
-        if(dist <= (selectedUnit.movePoints || 0)) {
-            selectedUnit.x = x; selectedUnit.y = y; selectedUnit.movePoints -= dist; 
-            window.saveGame();
-        }
-    }
-};
+&nbsp;&nbsp;if(Math.max(dx,dy)<=t.range){
 
-window.endTurn = () => {
-    if(currentPlayer !== playerId || isGameOver) return;
-    currentPlayer = (currentPlayer === 1) ? 2 : 1;
-    if(currentPlayer === 1) turn++;
-    state.money[currentPlayer] += 100000;
-    state.units.forEach(u => { 
-        if(u.owner === currentPlayer) { 
-            const cfg = state.playerConfigs[u.owner]?.units[u.type]; 
-            u.movePoints = cfg ? (cfg.speed || 3) : 3; 
-            u.hasAttacked = false;
-        } 
-    });
-    selectedUnit = null;
-    window.saveGame();
-};
+&nbsp;&nbsp;&nbsp;&nbsp;// 🔴 ефект удару
+&nbsp;&nbsp;&nbsp;&nbsp;let cell = getCell(d.x,d.y);
+&nbsp;&nbsp;&nbsp;&nbsp;cell.classList.add('hitFlash');
+&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()=>cell.classList.remove('hitFlash'), 200);
 
-window.render = () => {
-    document.getElementById('turn').innerText = turn;
-    document.getElementById('playerDisplay').innerText = currentPlayer;
-    document.getElementById('myMoney').innerText = Math.floor((state.money[playerId] || 0)/1000);
-    document.getElementById('endTurnBtn').disabled = (currentPlayer !== playerId);
+&nbsp;&nbsp;&nbsp;&nbsp;d.hp-=t.atk;
+&nbsp;&nbsp;&nbsp;&nbsp;a.attacked=true;
 
-    document.querySelectorAll('.cell').forEach(c => { c.innerHTML = ''; c.classList.remove('selected','city','can-attack'); });
-    
-    state.cities.forEach(c => { 
-        const cell = document.getElementById(`c-${c.x}-${c.y}`); 
-        if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; } 
-    });
-    
-    state.units.forEach(u => {
-        const cell = document.getElementById(`c-${u.x}-${u.y}`);
-        const config = state.playerConfigs?.[u.owner];
-        const cfg = config?.units[u.type];
-        if(!cell || !cfg) return;
+&nbsp;&nbsp;&nbsp;&nbsp;if(d.hp<=0){
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.units = state.units.filter(u=>u!==d);
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;}
+}
 
-        const img = document.createElement('img'); 
-        img.className = 'unitImg'; 
-        img.src = cfg.img; 
-        img.onerror = () => { cell.innerHTML = (u.owner===1?'🟦':'🟥'); };
-        cell.appendChild(img);
+function highlightMoves(u){ let s=u.movePoints;
+&nbsp;&nbsp;for(let dx=-s;dx<=s;dx++){ for(let dy=-s;dy<=s;dy++){
+&nbsp;&nbsp;&nbsp;&nbsp;let nx=u.x+dx, ny=u.y+dy;
+&nbsp;&nbsp;&nbsp;&nbsp;if(nx>=0 && ny>=0 && nx<width && ny<height && Math.max(Math.abs(dx),Math.abs(dy))<=s){
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let cell=getCell(nx,ny);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(u.movePoints>0) cell.classList.add('move'); else cell.classList.add('future');
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;}}
+}
 
-        const hpLabel = document.createElement('div'); 
-        hpLabel.className = 'hp'; hpLabel.innerText = u.hp; 
-        cell.appendChild(hpLabel);
+function highlightAttacks(u){ let r=unitTypes[u.type].range;
+&nbsp;&nbsp;state.units.forEach(e=>{ if(e.owner!==currentPlayer && !u.attacked){
+&nbsp;&nbsp;&nbsp;&nbsp;let dx=Math.abs(e.x-u.x), dy=Math.abs(e.y-u.y);
+&nbsp;&nbsp;&nbsp;&nbsp;if(Math.max(dx,dy)<=r){ getCell(e.x,e.y).classList.add('attackBorder'); }
+&nbsp;&nbsp;}});
+}
 
-        if(selectedUnit && u.id === selectedUnit.id) cell.classList.add('selected');
-        
-        // Підсвітка ворогів, яких можна атакувати
-        if(selectedUnit && u.owner !== playerId && !selectedUnit.hasAttacked) {
-            const myCfg = state.playerConfigs[playerId].units[selectedUnit.type];
-            const d = Math.max(Math.abs(selectedUnit.x - u.x), Math.abs(selectedUnit.y - u.y));
-            if(d <= (myCfg.range || 1)) cell.classList.add('can-attack');
-        }
-    });
-    window.renderShop();
-};
+function endTurn(){ currentPlayer=currentPlayer===1?2:1; if(currentPlayer===1) turn++;
+&nbsp;&nbsp;state.money[currentPlayer]+=100000;
+&nbsp;&nbsp;state.units.forEach(u=>{ if(u.owner===currentPlayer){ u.movePoints=unitTypes[u.type].speed; u.attacked=false; }});
+&nbsp;&nbsp;selectedUnit=null; saveState(); render();
+}
 
-window.renderShop = () => {
-    [1,2].forEach(p => {
-        const panel = document.getElementById(p === 1 ? 'leftPanel' : 'rightPanel');
-        const config = state.playerConfigs?.[p];
-        if(!config) { panel.innerHTML = `<p style="text-align:center; opacity:0.5;">Очікування P${p}...</p>`; return; }
-        
-        let html = `<h3 style="text-align:center; color:${p===1?'#3498db':'#e74c3c'}">${config.name}</h3>`;
-        Object.keys(config.units).forEach(k => {
-            const u = config.units[k];
-            html += `<div class="card" style="border-left:5px solid ${p===1?'#3498db':'#e74c3c'}; ${buyMode===k && playerId===p ? 'outline:3px solid gold' : ''}">
-                <b>${u.name}</b><br>
-                <img src="${u.img}" class="shopImg" onerror="this.src='https://via.placeholder.com/65?text=UNIT'">
-                <div style="font-size:10px; margin-bottom:5px;">❤️${u.hp} | ⚔️${u.atk} | 👟${u.speed} | 🎯${u.range||1}</div>
-                <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${u.price/1000}к</button>
-            </div>`;
-        });
-        panel.innerHTML = html;
-    });
-};
+function saveState(){ if(!room) return; set(ref(db,'games/'+room),{state,turn,currentPlayer}); }
+function loadState(){ if(!room) return; onValue(ref(db,'games/'+room),(snapshot)=>{ const data = snapshot.val(); if(!data) return;
+&nbsp;&nbsp;state=data.state||state; turn=data.turn||1; currentPlayer=data.currentPlayer||1; render();
+}); }
 
-window.setBuy = (k) => { 
-    if(currentPlayer !== playerId) return;
-    buyMode = (buyMode === k) ? null : k; 
-    selectedUnit = null;
-    window.render(); 
-};
+function resetState(){
+&nbsp;&nbsp;state={units:[],money:{1:500000,2:500000},cities:[{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}]};
+&nbsp;&nbsp;turn=1; currentPlayer=1; saveState(); render();
+}
 
-window.checkWin = () => {
-    if(isGameOver || state.units.length === 0) return;
-    const p1C = state.cities.filter(c => c.x === 0);
-    const p2C = state.cities.filter(c => c.x === 17);
-    
-    // Перевірка: чи стоять юніти Р2 на ОБОХ містах Р1
-    const p2OnP1Cities = p1C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 2));
-    // Перевірка: чи стоять юніти Р1 на ОБОХ містах Р2
-    const p1OnP2Cities = p2C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 1));
+// JOIN
 
-    if(p2OnP1Cities) { alert("ГРАВЕЦЬ 2 ПЕРЕМІГ! Обидві столиці захоплено!"); isGameOver = true; } 
-    else if(p1OnP2Cities) { alert("ГРАВЕЦЬ 1 ПЕРЕМІГ! Обидві столиці захоплено!"); isGameOver = true; }
-};
+document.getElementById('joinBtn').addEventListener('click',()=>{
+&nbsp;&nbsp;room = document.getElementById('roomInput').value.trim();
+&nbsp;&nbsp;playerId = parseInt(document.getElementById('playerSelect').value);
 
-window.updateTeamList();
+&nbsp;&nbsp;createGrid();
+
+&nbsp;&nbsp;get(ref(db,'games/'+room)).then(snapshot=>{
+&nbsp;&nbsp;&nbsp;&nbsp;if(!snapshot.exists()){ resetState(); }
+&nbsp;&nbsp;&nbsp;&nbsp;else { const data=snapshot.val(); state=data.state||state; turn=data.turn||1; currentPlayer=data.currentPlayer||1; render(); }
+&nbsp;&nbsp;&nbsp;&nbsp;loadState();
+&nbsp;&nbsp;});
+});
+
+const turnEl=document.getElementById('turn');
+const playerEl=document.getElementById('player');
+const money1=document.getElementById('money1');
+const money2=document.getElementById('money2');
+
+createGrid();
+render();
+
 </script>
 </body>
 </html>
+можемо в цю гру додати вкладку Гра - поточна версія і вкладка Юніти - де додаємо комплекти юнітів. Назва комплекту - додати юніта, харакеристики, ціна, картинка. потім ще можна додаи юніта, аюо ще один комплект. також додати іконку кошика - видалити юніт, або видалити комплект
