@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle - Unique Races</title>
+    <title>Beluga Battle</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 15px; }
         .nav { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
@@ -11,7 +11,6 @@
         .tab-btn.active { background: #3498db; color: white; }
         .tab-content { display: none; }
         
-        /* ПОЛЕ 60PX */
         #gridWrapper { 
             overflow: auto; border: 5px solid #000; border-radius: 12px; 
             background-image: url('https://raw.githubusercontent.com/zabuzos/beluga/main/img/ground.png');
@@ -110,7 +109,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Стандартна раса для новачків
 const DEFAULT_RACE = {
     name: "Люди",
     units: {
@@ -123,7 +121,6 @@ let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [DEFA
 let state = { units: [], money: {1: 500000, 2: 500000}, cities: [], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null;
 
-// Функції редактора
 window.openTab = (e, id) => {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -133,7 +130,7 @@ window.openTab = (e, id) => {
 };
 
 window.addNewArmy = () => {
-    const name = prompt("Назва раси (напр. Орки, Нежить):");
+    const name = prompt("Назва раси:");
     if(name) { userArmies.push({ name, units: {} }); saveAndRefresh(); }
 };
 
@@ -141,6 +138,13 @@ window.addUnitToArmy = (armyIdx) => {
     const id = 'u' + Date.now();
     userArmies[armyIdx].units[id] = { name: "Воїн", speed: 3, atk: 10, hp: 100, range: 1, price: 50000, img: "" };
     saveAndRefresh();
+};
+
+window.deleteUnit = (armyIdx, uId) => {
+    if(confirm("Видалити цього юніта?")) {
+        delete userArmies[armyIdx].units[uId];
+        saveAndRefresh();
+    }
 };
 
 window.updateUnitField = (armyIdx, uId, field, val) => {
@@ -163,8 +167,9 @@ function renderArmyEditor() {
                 <button onclick="deleteArmy(${aIdx})" style="color:#ff4757; background:none; border:1px solid #ff4757; padding:5px 10px; border-radius:4px; cursor:pointer;">Видалити расу</button>
             </div>
             ${Object.keys(army.units).map(uId => `
-                <div style="background:#2c3e50; padding:15px; margin-bottom:10px; border-radius:8px;">
-                    <input type="text" value="${army.units[uId].name}" onchange="updateUnitField(${aIdx}, '${uId}', 'name', this.value)" style="background:#34495e; color:white; border:none; padding:8px; width:100%; font-weight:bold; margin-bottom:10px;">
+                <div style="background:#2c3e50; padding:15px; margin-bottom:10px; border-radius:8px; position:relative;">
+                    <button onclick="window.deleteUnit(${aIdx}, '${uId}')" style="position:absolute; top:10px; right:10px; background:none; border:none; color:#ff4757; cursor:pointer; font-size:18px;" title="Видалити юніта">🗑️</button>
+                    <input type="text" value="${army.units[uId].name}" onchange="updateUnitField(${aIdx}, '${uId}', 'name', this.value)" style="background:#34495e; color:white; border:none; padding:8px; width:85%; font-weight:bold; margin-bottom:10px;">
                     <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;">
                         <label style="font-size:11px;">💰 Ціна <input type="number" value="${army.units[uId].price}" onchange="updateUnitField(${aIdx}, '${uId}', 'price', this.value)"></label>
                         <label style="font-size:11px;">❤️ HP <input type="number" value="${army.units[uId].hp}" onchange="updateUnitField(${aIdx}, '${uId}', 'hp', this.value)"></label>
@@ -187,15 +192,13 @@ function updateTeamList() {
     if(sel) sel.innerHTML = userArmies.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
 }
 
-// ЛОГІКА ГРИ
 document.getElementById('joinBtn').onclick = async () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
     const armyIdx = document.getElementById('teamSelect').value;
     const mySelectedRace = userArmies[armyIdx];
-
     if(!room) return alert("Введіть код кімнати");
-    if(!mySelectedRace) return alert("Створіть расу в пункті Армія!");
+    if(!mySelectedRace) return alert("Створіть расу!");
 
     const snap = await get(ref(db, 'games/'+room));
     if(!snap.exists()) {
@@ -204,8 +207,6 @@ document.getElementById('joinBtn').onclick = async () => {
     } else {
         const d = snap.val(); state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
     }
-
-    // Записуємо свою унікальну конфігурацію в базу кімнати
     if(!state.playerConfigs) state.playerConfigs = {};
     state.playerConfigs[playerId] = mySelectedRace;
 
