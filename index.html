@@ -3,74 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle - Final Edition</title>
+    <title>Beluga Battle - Fixed</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 15px; }
         .nav { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
         .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: #95a5a6; border-radius: 8px; font-weight: bold; font-size: 16px; }
         .tab-btn.active { background: #3498db; color: white; }
         .tab-content { display: none; }
-        
-        #gridWrapper { 
-            overflow: auto; border: 5px solid #000; border-radius: 12px; 
-            background-image: url('https://raw.githubusercontent.com/zabuzos/beluga/main/img/ground.png');
-            background-size: 60px 60px; width: fit-content; margin: 0 auto; max-width: 100%;
-        }
+        #gridWrapper { overflow: auto; border: 5px solid #000; border-radius: 12px; background-image: url('https://raw.githubusercontent.com/zabuzos/beluga/main/img/ground.png'); background-size: 60px 60px; width: fit-content; margin: 0 auto; max-width: 100%; }
         #grid { display: grid; grid-template-columns: repeat(18, 60px); background: rgba(0,0,0,0.2); }
         .cell { width: 60px; height: 60px; border: 1px solid rgba(255,255,255,0.1); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 35px; }
         .divider { border-right: 4px dashed gold !important; }
-        
         #menu { background: #34495e; padding: 30px; border-radius: 20px; text-align: center; max-width: 450px; margin: 40px auto; }
-        .menu-row { margin-bottom: 15px; }
-        input, select { padding: 12px; border-radius: 6px; border: none; width: 100%; box-sizing: border-box; font-size: 16px; }
-        
         .panel { width: 280px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; }
         .card { background: #ecf0f1; color: #333; padding: 12px; margin-bottom: 15px; border-radius: 10px; text-align: center; }
         .shopImg { width: 100%; height: 70px; object-fit: contain; }
-        
         .unitImg { width: 85%; height: 85%; object-fit: contain; position: absolute; pointer-events: none; z-index: 2; }
         .unitP1 { filter: drop-shadow(0 0 8px #3498db); }
         .unitP2 { filter: drop-shadow(0 0 8px #e74c3c); }
         .hp { position: absolute; bottom: 4px; right: 4px; font-size: 12px; background: red; color: white; padding: 2px 5px; border-radius: 4px; z-index: 3; font-weight: bold; }
-
         .btn { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
         .city { background: rgba(241, 196, 15, 0.4) !important; border: 2px solid gold !important; }
         .selected { outline: 4px solid white; box-shadow: 0 0 20px white; z-index: 5; }
-        .container { display: flex; justify-content: center; gap: 25px; }
     </style>
 </head>
 <body>
 
 <div class="nav">
-    <button class="tab-btn active" onclick="openTab(event, 'game-tab')">ГРАТИ</button>
-    <button class="tab-btn" onclick="openTab(event, 'army-tab')">АРМІЯ</button>
+    <button class="tab-btn active" id="btn-game" onclick="window.openTab(event, 'game-tab')">ГРАТИ</button>
+    <button class="tab-btn" id="btn-army" onclick="window.openTab(event, 'army-tab')">АРМІЯ</button>
 </div>
 
 <div id="game-tab" class="tab-content" style="display: block;">
     <div id="menu">
         <h1 style="color: #f1c40f;">⚔️ BELUGA BATTLE</h1>
-        <div class="menu-row"><input type="text" id="roomInput" placeholder="Код кімнати"></div>
-        <div class="menu-row">
-            <select id="playerSelect">
-                <option value="1">Гравець 1 (Сині - Зліва)</option>
-                <option value="2">Гравець 2 (Червоні - Справа)</option>
-            </select>
-        </div>
-        <div class="menu-row">
-            <label style="display:block; margin-bottom:5px; font-size:14px;">Твоя раса:</label>
-            <select id="teamSelect"></select>
-        </div>
-        <button class="btn" id="joinBtn" style="font-size: 18px; padding: 15px;">УВІЙТИ В БИТВУ</button>
+        <input type="text" id="roomInput" placeholder="Код кімнати" style="margin-bottom:10px; padding:10px; width:100%; box-sizing:border-box;">
+        <select id="playerSelect" style="margin-bottom:10px; padding:10px; width:100%;">
+            <option value="1">Гравець 1 (Сині)</option>
+            <option value="2">Гравець 2 (Червоні)</option>
+        </select>
+        <select id="teamSelect" style="margin-bottom:20px; padding:10px; width:100%;"></select>
+        <button class="btn" id="joinBtn">УВІЙТИ В БИТВУ</button>
     </div>
-
     <div id="gameArea" style="display: none;">
-        <div class="container">
+        <div style="display:flex; justify-content:center; gap:20px;">
             <div class="panel" id="leftPanel"></div>
-            <div class="main-game-block">
-                <div id="turnPanel" style="background: #34495e; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div id="turnPanel" style="background:#34495e; padding:10px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between;">
                     <span>Хід: <b id="turn">1</b> | P<b id="playerDisplay">1</b></span>
                     <span>💰 <b id="myMoney">0</b>к</span>
-                    <button onclick="window.endTurn()" style="background: #e67e22; border: none; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer;">OK</button>
+                    <button onclick="window.endTurn()">OK</button>
                 </div>
                 <div id="gridWrapper"><div id="grid"></div></div>
             </div>
@@ -80,12 +62,9 @@
 </div>
 
 <div id="army-tab" class="tab-content">
-    <div class="editor-container" style="max-width: 900px; margin: 0 auto; background: #34495e; padding: 25px; border-radius: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="margin:0;">🛠️ Редактор Рас</h2>
-            <button class="btn" style="width: auto; padding: 10px 20px;" onclick="addNewArmy()">+ Створити нову расу</button>
-        </div>
-        <div id="armyList"></div>
+    <div style="max-width:800px; margin:0 auto; background:#34495e; padding:20px; border-radius:15px;">
+        <button class="btn" onclick="window.addNewArmy()">+ Нова Раса</button>
+        <div id="armyList" style="margin-top:20px;"></div>
     </div>
 </div>
 
@@ -93,11 +72,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY",
-    databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com",
-    projectId: "beluga-a7197"
-};
+const firebaseConfig = { apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY", databaseURL: "https://beluga-a7197-default-rtdb.firebaseio.com", projectId: "beluga-a7197" };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -109,59 +84,18 @@ const DEFAULT_RACE = {
     }
 };
 
-let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies'));
-if (!userArmies || userArmies.length === 0) {
-    userArmies = [DEFAULT_RACE];
-    localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies));
-}
-
-let state = { units: [], money: {1: 500000, 2: 500000}, cities: [], playerConfigs: {} };
+window.userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [DEFAULT_RACE];
+let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null;
 
-// ТАБИ ТА РЕДАКТОР
+// ПРИМУСОВЕ ПРИВ'ЯЗУВАННЯ ФУНКЦІЙ ДО WINDOW
 window.openTab = (e, id) => {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).style.display = 'block';
-    e.currentTarget.classList.add('active');
-    if(id === 'army-tab') renderArmyEditor();
+    if(e) e.currentTarget.classList.add('active');
+    if(id === 'army-tab') window.renderArmyEditor();
 };
 
-window.addNewArmy = () => {
-    const name = prompt("Назва нової раси:");
-    if(name) { userArmies.push({ name, units: {} }); saveAndRefresh(); }
-};
-
-window.updateArmyName = (idx, name) => { userArmies[idx].name = name; localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies)); updateTeamList(); };
-
-window.addUnitToArmy = (idx) => {
-    const id = 'u' + Date.now();
-    userArmies[idx].units[id] = { name: "Воїн", speed: 3, atk: 10, hp: 100, range: 1, price: 50000, img: "" };
-    saveAndRefresh();
-};
-
-window.deleteUnit = (aIdx, uId) => { if(confirm("Видалити юніта?")) { delete userArmies[aIdx].units[uId]; saveAndRefresh(); } };
-
-window.updateUnitField = (aIdx, uId, field, val) => {
-    userArmies[aIdx].units[uId][field] = (field === 'name' || field === 'img') ? val : parseInt(val);
-    localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies));
-};
-
-function saveAndRefresh() {
-    localStorage.setItem('beluga_user_armies', JSON.stringify(userArmies));
-    renderArmyEditor();
-    updateTeamList();
-}
-
-function renderArmyEditor() {
-    const container = document.getElementById('armyList');
-    container.innerHTML = userArmies.map((army, aIdx) => `
-        <div class="editor-set" style="margin-bottom:30px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; gap:10px;">
-                <input type="text" value="${army.name}" onchange="updateArmyName(${aIdx}, this.value)" style="background:none; color:#f1c40f; border:none; border-bottom:1px dashed #f1c40f; font-size:18px; font-weight:bold; flex:1;">
-                <button onclick="if(confirm('Видалити расу?')){userArmies.splice(${aIdx},1); saveAndRefresh();}" style="color:red; background:none; border:1px solid red; padding:5px; border-radius:4px; cursor:pointer;">Видалити</button>
-            </div>
-            ${Object.keys(army.units).map(uId => `
-                <div style="background:#2c3e50; padding:15px; margin-bottom:10px; border-radius:8px; position:relative;">
-                    <button onclick="window.deleteUnit(${aIdx}, '${uId}')" style="position:absolute; top:10px; right:10px; background:none; border:none; color:red; cursor:pointer;">🗑️</button>
-                    <input type="text" value="${army.units[uId].name}" onchange="updateUnitField(${aIdx}, '${uId}', 'name', this.value)" style="background:#344
+window.updateTeamList = () => {
+    const sel = document.getElementById('teamSelect');
