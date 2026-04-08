@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle - Original Units & Editor</title>
+    <title>Beluga Battle - Castle Edition</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 10px; }
         .nav { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
@@ -21,10 +21,14 @@
             -webkit-overflow-scrolling: touch;
         }
         #grid { display: grid; grid-template-columns: repeat(18, 40px); background: rgba(0,0,0,0.2); }
-        .cell { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); position: relative; cursor: pointer; }
+        .cell { 
+            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); 
+            position: relative; cursor: pointer; display: flex; align-items: center; 
+            justify-content: center; font-size: 20px; 
+        }
         .divider { border-right: 3px dashed gold !important; }
         
-        /* МЕНЮ ТА ПАНЕЛІ */
+        /* МЕНЮ */
         #menu { background: #34495e; padding: 20px; border-radius: 15px; text-align: center; max-width: 400px; margin: 20px auto; }
         .menu-row { margin-bottom: 15px; }
         input, select { padding: 10px; border-radius: 5px; border: none; width: 100%; box-sizing: border-box; }
@@ -33,41 +37,23 @@
         .card { background: #ecf0f1; color: #333; padding: 8px; margin-bottom: 10px; border-radius: 8px; text-align: center; }
         .shopImg { width: 100%; height: 50px; object-fit: contain; }
         
-        .unitImg { width: 80%; height: 80%; object-fit: contain; margin: 10%; pointer-events: none; }
+        .unitImg { width: 80%; height: 80%; object-fit: contain; position: absolute; pointer-events: none; z-index: 2; }
         .unitP1 { filter: drop-shadow(0 0 5px #3498db); }
         .unitP2 { filter: drop-shadow(0 0 5px #e74c3c); }
-        .hp { position: absolute; bottom: 2px; right: 2px; font-size: 10px; background: red; color: white; padding: 1px 3px; border-radius: 3px; }
+        .hp { position: absolute; bottom: 2px; right: 2px; font-size: 10px; background: red; color: white; padding: 1px 3px; border-radius: 3px; z-index: 3; }
 
         .btn { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
         .btn:hover { background: #2ecc71; }
         
-        /* РЕДАКТОР АРМІЇ */
-        .editor-container { max-width: 800px; margin: 0 auto; background: #34495e; padding: 15px; border-radius: 10px; }
-        .unit-edit-card { background: #2c3e50; padding: 12px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #3498db; }
-        .edit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .city { background: rgba(241, 196, 15, 0.3) !important; border: 2px solid #f1c40f !important; box-sizing: border-box; }
-        .selected { outline: 3px solid white; box-shadow: 0 0 15px white; }
+        .city { background: rgba(241, 196, 15, 0.4) !important; border: 2px solid #f1c40f !important; box-sizing: border-box; }
+        .selected { outline: 3px solid white; box-shadow: 0 0 15px white; z-index: 5; }
 
-        /* АДАПТИВНІСТЬ ГРИ */
         .container { display: flex; justify-content: center; gap: 15px; }
 
         @media (max-width: 768px) {
             .container { flex-direction: column; align-items: center; }
-            .panel { 
-                width: 100%; 
-                display: flex; 
-                flex-direction: row; 
-                overflow-x: auto; 
-                gap: 10px; 
-                padding: 10px;
-                box-sizing: border-box;
-            }
-            .card { min-width: 120px; margin-bottom: 0; flex-shrink: 0; }
-            .shopImg { height: 40px; }
-            
-            /* Адаптація редактора */
-            .edit-grid { grid-template-columns: 1fr 1fr; }
-            .editor-header { flex-direction: column; gap: 10px; text-align: center; }
+            .panel { width: 100%; display: flex; flex-direction: row; overflow-x: auto; gap: 10px; }
+            .card { min-width: 110px; }
         }
     </style>
 </head>
@@ -88,9 +74,7 @@
                 <option value="2">Гравець 2 (Червоні)</option>
             </select>
         </div>
-        <div class="menu-row">
-            <select id="teamSelect"></select>
-        </div>
+        <div class="menu-row"><select id="teamSelect"></select></div>
         <button class="btn" id="joinBtn">УВІЙТИ В БИТВУ</button>
     </div>
 
@@ -103,9 +87,7 @@
                     <span>💰 <b id="myMoney">0</b>к</span>
                     <button onclick="window.endTurn()" style="background: #e67e22; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">ОК</button>
                 </div>
-                <div id="gridWrapper">
-                    <div id="grid"></div>
-                </div>
+                <div id="gridWrapper"><div id="grid"></div></div>
             </div>
             <div class="panel" id="rightPanel"></div>
         </div>
@@ -113,8 +95,8 @@
 </div>
 
 <div id="army-tab" class="tab-content">
-    <div class="editor-container">
-        <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="editor-container" style="max-width: 800px; margin: 0 auto; background: #34495e; padding: 15px; border-radius: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin:0;">🛠️ Редактор Армії</h2>
             <button class="btn" style="width: auto;" onclick="addNewArmy()">+ Нова команда</button>
         </div>
@@ -144,8 +126,15 @@ const INITIAL_ARMY = {
 };
 
 let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [INITIAL_ARMY];
-let state = { units: [], money: {1: 500000, 2: 500000}, playerConfigs: {} };
+let state = { units: [], money: {1: 500000, 2: 500000}, cities: [], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null;
+
+function generateRandomCities() {
+    const cities = [];
+    for(let i=0; i<2; i++) cities.push({ x: Math.floor(Math.random()*2), y: Math.floor(Math.random()*10) });
+    for(let i=0; i<2; i++) cities.push({ x: 16 + Math.floor(Math.random()*2), y: Math.floor(Math.random()*10) });
+    return cities;
+}
 
 window.openTab = (e, id) => {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
@@ -157,10 +146,7 @@ window.openTab = (e, id) => {
 
 window.addNewArmy = () => {
     const name = prompt("Назва команди:");
-    if(name) {
-        userArmies.push({ name, units: {} });
-        saveAndRefresh();
-    }
+    if(name) { userArmies.push({ name, units: {} }); saveAndRefresh(); }
 };
 
 window.addUnitToArmy = (armyIdx) => {
@@ -183,70 +169,53 @@ function saveAndRefresh() {
 function renderArmyEditor() {
     const container = document.getElementById('armyList');
     container.innerHTML = userArmies.map((army, aIdx) => `
-        <div class="editor-set" style="margin-bottom:30px;">
+        <div class="editor-set" style="margin-bottom:30px; border-bottom:1px solid #444; padding-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="color:#f1c40f;">📦 ${army.name}</h3>
-                <button onclick="deleteArmy(${aIdx})" style="color:#e74c3c; background:none; border:none; cursor:pointer; font-size:12px;">Видалити команду</button>
+                <button onclick="deleteArmy(${aIdx})" style="color:#e74c3c; background:none; border:none; cursor:pointer; font-size:12px;">Видалити</button>
             </div>
             ${Object.keys(army.units).map(uId => `
-                <div class="unit-edit-card">
-                    <input type="text" value="${army.units[uId].name}" onchange="updateUnitField(${aIdx}, '${uId}', 'name', this.value)" style="font-weight:bold; margin-bottom:10px; background:#34495e; color:white;">
-                    <div class="edit-grid">
-                        <label style="font-size:10px;">💰 Ціна <input type="number" value="${army.units[uId].price}" onchange="updateUnitField(${aIdx}, '${uId}', 'price', this.value)"></label>
-                        <label style="font-size:10px;">❤️ HP <input type="number" value="${army.units[uId].hp}" onchange="updateUnitField(${aIdx}, '${uId}', 'hp', this.value)"></label>
-                        <label style="font-size:10px;">⚔️ ATK <input type="number" value="${army.units[uId].atk}" onchange="updateUnitField(${aIdx}, '${uId}', 'atk', this.value)"></label>
-                        <label style="font-size:10px;">👟 Спід <input type="number" value="${army.units[uId].speed}" onchange="updateUnitField(${aIdx}, '${uId}', 'speed', this.value)"></label>
-                        <label style="font-size:10px;">🎯 Рендж <input type="number" value="${army.units[uId].range}" onchange="updateUnitField(${aIdx}, '${uId}', 'range', this.value)"></label>
+                <div class="unit-edit-card" style="background:#2c3e50; padding:10px; margin-bottom:10px; border-radius:5px;">
+                    <input type="text" value="${army.units[uId].name}" onchange="updateUnitField(${aIdx}, '${uId}', 'name', this.value)" style="background:#34495e; color:white; border:none; padding:5px; width:100%; font-weight:bold;">
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px; margin-top:5px;">
+                        <input type="number" value="${army.units[uId].price}" onchange="updateUnitField(${aIdx}, '${uId}', 'price', this.value)" placeholder="Ціна">
+                        <input type="number" value="${army.units[uId].hp}" onchange="updateUnitField(${aIdx}, '${uId}', 'hp', this.value)" placeholder="HP">
+                        <input type="number" value="${army.units[uId].atk}" onchange="updateUnitField(${aIdx}, '${uId}', 'atk', this.value)" placeholder="ATK">
+                        <input type="number" value="${army.units[uId].speed}" onchange="updateUnitField(${aIdx}, '${uId}', 'speed', this.value)" placeholder="SPD">
+                        <input type="number" value="${army.units[uId].range}" onchange="updateUnitField(${aIdx}, '${uId}', 'range', this.value)" placeholder="RNG">
                     </div>
-                    <div style="margin-top:10px;">
-                        <input type="text" placeholder="URL картинки P1" value="${army.units[uId].img1}" onchange="updateUnitField(${aIdx}, '${uId}', 'img1', this.value)" style="font-size:11px; margin-bottom:5px;">
-                        <input type="text" placeholder="URL картинки P2" value="${army.units[uId].img2}" onchange="updateUnitField(${aIdx}, '${uId}', 'img2', this.value)" style="font-size:11px;">
-                    </div>
+                    <input type="text" value="${army.units[uId].img1}" onchange="updateUnitField(${aIdx}, '${uId}', 'img1', this.value)" placeholder="URL P1" style="width:100%; margin-top:5px; font-size:10px;">
+                    <input type="text" value="${army.units[uId].img2}" onchange="updateUnitField(${aIdx}, '${uId}', 'img2', this.value)" placeholder="URL P2" style="width:100%; margin-top:5px; font-size:10px;">
                 </div>
             `).join('')}
-            <button class="btn" onclick="addUnitToArmy(${aIdx})">+ Додати юніта в "${army.name}"</button>
-            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin-top:20px;">
+            <button class="btn" style="padding:5px;" onclick="addUnitToArmy(${aIdx})">+ Додати юніта</button>
         </div>
     `).join('');
 }
 
-window.deleteArmy = (idx) => { if(confirm("Видалити цю команду повністю?")) { userArmies.splice(idx,1); saveAndRefresh(); } };
-
-function updateTeamList() {
-    const sel = document.getElementById('teamSelect');
-    if(sel) sel.innerHTML = userArmies.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
-}
+window.deleteArmy = (idx) => { if(confirm("Видалити команду?")) { userArmies.splice(idx,1); saveAndRefresh(); } };
 
 document.getElementById('joinBtn').onclick = async () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
     const armyIdx = document.getElementById('teamSelect').value;
     const selectedArmy = userArmies[armyIdx];
-
     if(!room) return alert("Введіть код кімнати");
 
     const snap = await get(ref(db, 'games/'+room));
     if(!snap.exists()) {
-        state = { units: [], money: {1:500000, 2:500000}, cities: [{x:1,y:4},{x:1,y:5},{x:16,y:4},{x:16,y:5}], playerConfigs: {} };
+        state = { units: [], money: {1:500000, 2:500000}, cities: generateRandomCities(), playerConfigs: {} };
+        turn = 1; currentPlayer = 1;
     } else {
-        state = snap.val().state;
-        turn = snap.val().turn;
-        currentPlayer = snap.val().currentPlayer;
+        const d = snap.val(); state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
     }
-    
-    if(!state.playerConfigs) state.playerConfigs = {};
     state.playerConfigs[playerId] = selectedArmy;
-    
     await set(ref(db, 'games/'+room), { state, turn, currentPlayer });
-    
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameArea').style.display = 'block';
     createGrid();
-    
     onValue(ref(db, 'games/'+room), (s) => {
-        const d = s.val(); if(!d) return;
-        state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
-        render();
+        const d = s.val(); if(d) { state = d.state; turn = d.turn; currentPlayer = d.currentPlayer; render(); }
     });
 };
 
@@ -254,11 +223,9 @@ function createGrid() {
     const g = document.getElementById('grid'); g.innerHTML = '';
     for(let y=0; y<10; y++) {
         for(let x=0; x<18; x++) {
-            const d = document.createElement('div');
-            d.className = 'cell';
+            const d = document.createElement('div'); d.className = 'cell';
             if(x === 8) d.classList.add('divider');
-            d.id = `c-${x}-${y}`;
-            d.onclick = () => cellClick(x, y);
+            d.id = `c-${x}-${y}`; d.onclick = () => cellClick(x, y);
             g.appendChild(d);
         }
     }
@@ -267,42 +234,34 @@ function createGrid() {
 function cellClick(x, y) {
     if(currentPlayer !== playerId) return;
     const unit = (state.units || []).find(u => u.x === x && u.y === y);
-    const myConfig = state.playerConfigs[playerId]?.units || {};
-
     if(buyMode) {
-        const uInfo = myConfig[buyMode];
-        const isMySide = (playerId === 1) ? x < 9 : x >= 9;
-        if(!unit && isMySide && state.money[playerId] >= uInfo.price) {
-            state.money[playerId] -= uInfo.price;
-            if(!state.units) state.units = [];
-            state.units.push({ x, y, owner: playerId, type: buyMode, hp: uInfo.hp, movePoints: 0, attacked: true });
+        const myConfig = state.playerConfigs[playerId]?.units[buyMode];
+        const isMyCity = (state.cities || []).some(c => c.x === x && c.y === y && ((playerId === 1 && x < 2) || (playerId === 2 && x > 15)));
+        if(!unit && isMyCity && state.money[playerId] >= myConfig.price) {
+            state.money[playerId] -= myConfig.price;
+            state.units.push({ x, y, owner: playerId, type: buyMode, hp: myConfig.hp, movePoints: 0, attacked: true });
             buyMode = null; save();
         }
         return;
     }
-
     if(unit && unit.owner === playerId) { selectedUnit = unit; render(); return; }
-    
     if(selectedUnit && !unit) {
         const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
         if(dist <= selectedUnit.movePoints) {
-            selectedUnit.x = x; selectedUnit.y = y;
-            selectedUnit.movePoints -= dist;
-            save();
+            selectedUnit.x = x; selectedUnit.y = y; selectedUnit.movePoints -= dist; save();
         }
     }
 }
 
 window.endTurn = () => {
     if(currentPlayer !== playerId) return;
-    currentPlayer = (currentPlayer === 1) ? 2 : 1;
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
     if(currentPlayer === 1) turn++;
     state.money[currentPlayer] += 100000;
     (state.units || []).forEach(u => {
         if(u.owner === currentPlayer) {
             const cfg = state.playerConfigs[u.owner]?.units[u.type];
-            u.movePoints = cfg ? cfg.speed : 1;
-            u.attacked = false;
+            u.movePoints = cfg ? cfg.speed : 1; u.attacked = false;
         }
     });
     save();
@@ -314,27 +273,24 @@ function render() {
     document.getElementById('turn').innerText = turn;
     document.getElementById('playerDisplay').innerText = currentPlayer;
     document.getElementById('myMoney').innerText = Math.floor(state.money[playerId]/1000);
+    document.querySelectorAll('.cell').forEach(c => { c.innerHTML = ''; c.classList.remove('selected','city'); });
     
-    document.querySelectorAll('.cell').forEach(c => {
-        c.innerHTML = ''; c.classList.remove('selected','city');
+    (state.cities || []).forEach(c => {
+        const cell = document.getElementById(`c-${c.x}-${c.y}`);
+        if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; }
     });
-
-    (state.cities || []).forEach(c => document.getElementById(`c-${c.x}-${c.y}`)?.classList.add('city'));
 
     (state.units || []).forEach(u => {
         const cell = document.getElementById(`c-${u.x}-${u.y}`);
         const config = state.playerConfigs[u.owner]?.units[u.type];
         if(!cell || !config) return;
-
         const img = document.createElement('img');
         img.src = u.owner === 1 ? config.img1 : config.img2;
         img.className = 'unitImg ' + (u.owner === 1 ? 'unitP1' : 'unitP2');
         cell.appendChild(img);
-        
         const hp = document.createElement('div'); hp.className = 'hp'; hp.innerText = u.hp; cell.appendChild(hp);
         if(u === selectedUnit) cell.classList.add('selected');
     });
-
     renderShop();
 }
 
@@ -342,35 +298,31 @@ function renderShop() {
     const draw = (p) => {
         const target = p === 1 ? 'leftPanel' : 'rightPanel';
         const config = state.playerConfigs[p];
-        if(!config) { 
-            document.getElementById(target).innerHTML = `<p style="font-size:11px; opacity:0.6; text-align:center;">Очікування P${p}...</p>`; 
-            return; 
-        }
-        
+        if(!config) { document.getElementById(target).innerHTML = `<p style="font-size:11px; opacity:0.6;">Очікування P${p}...</p>`; return; }
         let html = `<h4 style="margin:5px 0; text-align:center;">${p===1?'🟦':'🟥'} ${config.name}</h4>`;
-        
         Object.keys(config.units).forEach(k => {
             const u = config.units[k];
-            html += `
-                <div class="card">
-                    <div style="font-size: 12px; font-weight: bold; overflow: hidden; white-space: nowrap;">${u.name}</div>
-                    <img src="${p===1 ? u.img1 : u.img2}" class="shopImg">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; font-size: 9px; margin: 4px 0; background: #dfe6e9; border-radius: 4px;">
-                        <span>❤️${u.hp}</span><span>⚔️${u.atk}</span>
-                    </div>
-                    <button class="btn" style="padding:5px; font-size:11px;" onclick="window.setBuy('${k}')" ${playerId !== p || currentPlayer !== p ? 'disabled' : ''}>
-                        🛒 ${u.price/1000}k
-                    </button>
-                </div>`;
+            html += `<div class="card">
+                <div style="font-size: 11px; font-weight: bold;">${u.name}</div>
+                <img src="${p===1 ? u.img1 : u.img2}" class="shopImg">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; font-size: 9px; margin: 4px 0; background: #dfe6e9; border-radius: 4px;">
+                    <span>❤️${u.hp}</span><span>⚔️${u.atk}</span>
+                </div>
+                <button class="btn" style="padding:5px; font-size:11px;" onclick="window.setBuy('${k}')" ${playerId !== p || currentPlayer !== p ? 'disabled' : ''}>
+                    🛒 ${u.price/1000}k
+                </button>
+            </div>`;
         });
         document.getElementById(target).innerHTML = html;
     };
-    draw(1); 
-    draw(2);
+    draw(1); draw(2);
 }
 
 window.setBuy = (k) => { buyMode = k; };
-
+function updateTeamList() {
+    const sel = document.getElementById('teamSelect');
+    if(sel) sel.innerHTML = userArmies.map((a, i) => `<option value="${i}">${a.name}</option>`).join('');
+}
 updateTeamList();
 </script>
 </body>
