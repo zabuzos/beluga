@@ -78,6 +78,7 @@ const firebaseConfig = { apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY", data
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Початкові дані
 const DEFAULT_RACE = { name: "Люди", units: { u1: { name: "Мечник", speed: 3, atk: 20, hp: 60, price: 40000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p1.png" } } };
 let stored = localStorage.getItem('beluga_user_armies');
 window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(stored) : [DEFAULT_RACE];
@@ -85,6 +86,7 @@ window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(store
 let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null, isGameOver = false;
 
+// Функції вкладок
 window.openTab = (e, id) => {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -104,7 +106,7 @@ window.saveAndRefresh = () => {
 };
 
 window.addNewArmy = () => {
-    const n = prompt("Назва:"); if(n) { window.userArmies.push({name: n, units: {}}); window.saveAndRefresh(); }
+    const n = prompt("Назва нової раси:"); if(n) { window.userArmies.push({name: n, units: {}}); window.saveAndRefresh(); }
 };
 
 window.renderArmyEditor = () => {
@@ -121,57 +123,76 @@ window.renderArmyEditor = () => {
                         <button onclick="delete window.userArmies[${aIdx}].units['${uId}']; window.saveAndRefresh()" style="position:absolute;top:2px;right:2px;border:none;background:none;color:red;cursor:pointer;">✕</button>
                         <input type="text" value="${army.units[uId].name}" onchange="window.userArmies[${aIdx}].units['${uId}'].name=this.value; window.saveAndRefresh()">
                         <div style="display:flex;gap:2px;">
-                            <input type="number" value="${army.units[uId].hp}" onchange="window.userArmies[${aIdx}].units['${uId}'].hp=Number(this.value); window.saveAndRefresh()">
-                            <input type="number" value="${army.units[uId].atk}" onchange="window.userArmies[${aIdx}].units['${uId}'].atk=Number(this.value); window.saveAndRefresh()">
+                            <input type="number" title="HP" value="${army.units[uId].hp}" onchange="window.userArmies[${aIdx}].units['${uId}'].hp=Number(this.value); window.saveAndRefresh()">
+                            <input type="number" title="ATK" value="${army.units[uId].atk}" onchange="window.userArmies[${aIdx}].units['${uId}'].atk=Number(this.value); window.saveAndRefresh()">
                         </div>
-                        <input type="number" value="${army.units[uId].price}" onchange="window.userArmies[${aIdx}].units['${uId}'].price=Number(this.value); window.saveAndRefresh()">
-                        <input type="text" placeholder="URL Img" value="${army.units[uId].img}" onchange="window.userArmies[${aIdx}].units['${uId}'].img=this.value; window.saveAndRefresh()">
+                        <input type="number" title="Price" value="${army.units[uId].price}" onchange="window.userArmies[${aIdx}].units['${uId}'].price=Number(this.value); window.saveAndRefresh()">
+                        <input type="text" placeholder="URL зображення" value="${army.units[uId].img}" onchange="window.userArmies[${aIdx}].units['${uId}'].img=this.value; window.saveAndRefresh()">
                     </div>
                 `).join('')}
-                <div style="border:1px dashed #666; height:100px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="const id='u'+Date.now(); window.userArmies[${aIdx}].units[id]={name:'Новий',speed:3,atk:10,hp:50,price:30000,img:''}; window.saveAndRefresh()">+</div>
+                <div style="border:1px dashed #666; height:100px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="const id='u'+Date.now(); window.userArmies[${aIdx}].units[id]={name:'Новий юніт',speed:3,atk:10,hp:50,price:30000,img:''}; window.saveAndRefresh()">+ Додати юніта</div>
             </div>
         </div>
     `).join('');
 };
 
+// ЛОГІКА ГРИ
 document.getElementById('joinBtn').onclick = async () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
     const armyIdx = document.getElementById('teamSelect').value;
-    if(!room || !window.userArmies[armyIdx]) return alert("Дані вказано невірно!");
+    
+    if(!room || !window.userArmies[armyIdx]) return alert("Введіть код кімнати!");
 
     const myChoice = window.userArmies[armyIdx];
+    console.log("Вибрана раса:", myChoice);
+
     const roomRef = ref(db, 'games/' + room);
     const snap = await get(roomRef);
     
     if(!snap.exists()) {
-        state = { units: [], money: {1:500000, 2:500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
+        // Створюємо нову гру
+        state = { 
+            units: [], 
+            money: {1: 500000, 2: 500000}, 
+            cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], 
+            playerConfigs: {} 
+        };
         state.playerConfigs[playerId] = myChoice;
         await set(roomRef, { state, turn: 1, currentPlayer: 1 });
     } else {
+        // Оновлюємо існуючу
         const d = snap.val();
         state = d.state;
         if (!state.playerConfigs) state.playerConfigs = {};
         state.playerConfigs[playerId] = myChoice;
-        await update(roomRef, { "state/playerConfigs": state.playerConfigs });
+        // Оновлюємо тільки наш конфіг, щоб не затерти чужий
+        await set(ref(db, `games/${room}/state/playerConfigs/${playerId}`), myChoice);
     }
 
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameArea').style.display = 'block';
     window.createGrid();
+    window.render(); // Рендеримо відразу
 
     onValue(roomRef, (s) => {
-        const d = s.val(); if(!d) return;
-        state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
-        window.render(); window.checkWin();
+        const d = s.val(); 
+        if(!d) return;
+        state = d.state; 
+        if(!state.playerConfigs) state.playerConfigs = {};
+        turn = d.turn; 
+        currentPlayer = d.currentPlayer;
+        window.render();
+        window.checkWin();
     });
 };
 
 window.saveGame = () => set(ref(db, 'games/'+room), { state, turn, currentPlayer });
 
 window.resetGame = async () => {
-    if(!confirm("Скинути поле?")) return;
-    state.units = []; state.money = {1:500000, 2:500000};
+    if(!confirm("Скинути поле бою?")) return;
+    state.units = []; 
+    state.money = {1:500000, 2:500000};
     turn = 1; currentPlayer = 1; isGameOver = false; buyMode = null;
     await window.saveGame();
 };
@@ -197,7 +218,7 @@ window.cellClick = (x, y) => {
         if(!myRace || !myRace.units) return;
         const cfg = myRace.units[buyMode];
         const isMyHalf = (playerId === 1 && x < 9) || (playerId === 2 && x >= 9);
-        if(!unitAtCell && isMyHalf && state.money[playerId] >= cfg.price) {
+        if(!unitAtCell && isMyHalf && (state.money[playerId] || 0) >= cfg.price) {
             state.money[playerId] -= cfg.price;
             state.units.push({ x, y, owner: playerId, type: buyMode, hp: cfg.hp, movePoints: 0 });
             buyMode = null; window.saveGame();
@@ -221,7 +242,7 @@ window.endTurn = () => {
     state.money[currentPlayer] = (state.money[currentPlayer] || 0) + 100000;
     state.units.forEach(u => { 
         if(u.owner === currentPlayer) { 
-            const cfg = state.playerConfigs[u.owner]?.units[u.type]; 
+            const cfg = state.playerConfigs[u.owner]?.units?.[u.type]; 
             u.movePoints = cfg ? (cfg.speed || 3) : 3; 
         } 
     });
@@ -232,20 +253,34 @@ window.render = () => {
     document.getElementById('turn').innerText = turn;
     document.getElementById('playerDisplay').innerText = currentPlayer;
     document.getElementById('myMoney').innerText = Math.floor((state.money[playerId] || 0)/1000);
-    document.querySelectorAll('.cell').forEach(c => { c.innerHTML = ''; c.classList.remove('selected','city'); });
-    state.cities.forEach(c => { const cell = document.getElementById(`c-${c.x}-${c.y}`); if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; } });
     
-    state.units.forEach(u => {
-        const cell = document.getElementById(`c-${u.x}-${u.y}`);
-        const config = state.playerConfigs?.[u.owner];
-        const cfg = config?.units?.[u.type];
-        if(!cell || !cfg) return;
-        const img = document.createElement('img'); img.className = 'unitImg '+(u.owner===1?'unitP1':'unitP2'); 
-        img.src = cfg.img; img.onerror = () => { cell.innerHTML += (u.owner===1?'🟦':'🟥'); };
-        cell.appendChild(img);
-        const hpLabel = document.createElement('div'); hpLabel.className = 'hp'; hpLabel.innerText = u.hp; cell.appendChild(hpLabel);
-        if(u === selectedUnit) cell.classList.add('selected');
+    document.querySelectorAll('.cell').forEach(c => { 
+        c.innerHTML = ''; 
+        c.classList.remove('selected','city'); 
     });
+
+    state.cities.forEach(c => { 
+        const cell = document.getElementById(`c-${c.x}-${c.y}`); 
+        if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; } 
+    });
+    
+    if(state.units) {
+        state.units.forEach(u => {
+            const cell = document.getElementById(`c-${u.x}-${u.y}`);
+            const config = state.playerConfigs?.[u.owner];
+            const cfg = config?.units?.[u.type];
+            if(!cell || !cfg) return;
+            const img = document.createElement('img'); 
+            img.className = 'unitImg'; 
+            img.src = cfg.img; 
+            img.onerror = () => { cell.innerHTML = (u.owner===1?'🟦':'🟥'); };
+            cell.appendChild(img);
+            const hpLabel = document.createElement('div'); 
+            hpLabel.className = 'hp'; hpLabel.innerText = u.hp; 
+            cell.appendChild(hpLabel);
+            if(u === selectedUnit) cell.classList.add('selected');
+        });
+    }
     window.renderShop();
 };
 
@@ -253,35 +288,46 @@ window.renderShop = () => {
     [1,2].forEach(p => {
         const panel = document.getElementById(p === 1 ? 'leftPanel' : 'rightPanel');
         if (!panel) return;
-        const config = state.playerConfigs?.[p];
-        if(!config || !config.units) { 
-            panel.innerHTML = `<p style="text-align:center; opacity:0.5;">Очікування P${p}...</p>`; 
+        
+        const config = state.playerConfigs ? state.playerConfigs[p] : null;
+        
+        if(!config) { 
+            panel.innerHTML = `<p style="text-align:center; padding:20px; opacity:0.5;">Очікування P${p}...<br><small>Він має натиснути "Увійти"</small></p>`; 
             return; 
         }
         
-        let html = `<h3 style="text-align:center; color:${p===1?'#3498db':'#e74c3c'}">${config.name}</h3>`;
-        Object.keys(config.units).forEach(k => {
-            const u = config.units[k];
-            const priceK = (u.price || 0) / 1000;
-            html += `<div class="card" style="border-left:5px solid ${p===1?'#3498db':'#e74c3c'}; ${buyMode===k && playerId===p ? 'border:2px solid gold' : ''}">
-                <b>${u.name}</b><br>
-                <img src="${u.img}" class="shopImg" onerror="this.src='https://via.placeholder.com/65?text=UNIT'">
-                <div style="font-size:11px; margin-bottom:5px;">❤️${u.hp} | ⚔️${u.atk} | 👟${u.speed || 3}</div>
-                <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${priceK}к</button>
-            </div>`;
-        });
+        let html = `<h3 style="text-align:center; color:${p===1?'#3498db':'#e74c3c'}">${config.name || 'Раса'}</h3>`;
+        
+        if (!config.units || Object.keys(config.units).length === 0) {
+            html += `<p style="font-size:12px; text-align:center;">У цієї раси немає юнітів. <br> Створіть їх у вкладці АРМІЯ.</p>`;
+        } else {
+            Object.keys(config.units).forEach(k => {
+                const u = config.units[k];
+                const priceK = (u.price || 0) / 1000;
+                html += `<div class="card" style="border-left:5px solid ${p===1?'#3498db':'#e74c3c'}; ${buyMode===k && playerId===p ? 'outline:2px solid gold' : ''}">
+                    <b>${u.name}</b><br>
+                    <img src="${u.img}" class="shopImg" onerror="this.src='https://via.placeholder.com/65?text=UNIT'">
+                    <div style="font-size:11px; margin-bottom:5px;">❤️${u.hp} | ⚔️${u.atk} | 👟${u.speed || 3}</div>
+                    <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${priceK}к</button>
+                </div>`;
+            });
+        }
         panel.innerHTML = html;
     });
 };
 
-window.setBuy = (k) => { buyMode = (buyMode === k) ? null : k; window.render(); };
+window.setBuy = (k) => { 
+    buyMode = (buyMode === k) ? null : k; 
+    window.render(); 
+};
 
 window.checkWin = () => {
     if(isGameOver || !state.units || state.units.length === 0) return;
     const p1C = state.cities.filter(c => c.x === 0), p2C = state.cities.filter(c => c.x === 17);
     const p2Win = p1C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 2));
     const p1Win = p2C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 1));
-    if(p2Win) { alert("P2 ПЕРЕМІГ!"); isGameOver = true; } else if(p1Win) { alert("P1 ПЕРЕМІГ!"); isGameOver = true; }
+    if(p2Win) { alert("Гравець 2 (Червоні) захопив столицю!"); isGameOver = true; } 
+    else if(p1Win) { alert("Гравець 1 (Сині) захопив столицю!"); isGameOver = true; }
 };
 
 window.updateTeamList();
