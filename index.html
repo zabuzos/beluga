@@ -119,13 +119,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const DEFAULT_RACE = {
-    name: "Люди",
-    units: {
-        u1: { name: "Мечник", speed: 3, atk: 20, hp: 60, range: 1, price: 40000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p1.png" },
-        u2: { name: "Лучник", speed: 2, atk: 15, hp: 40, range: 3, price: 60000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/shooter_p1.png" }
+// БЕЗПЕЧНЕ ЗАВАНТАЖЕННЯ АРМІЙ
+let userArmies = [];
+try {
+    const saved = localStorage.getItem('beluga_user_armies');
+    userArmies = saved ? JSON.parse(saved) : [DEFAULT_RACE];
+    
+    // Перевірка на "порожній" або "битий" масив
+    if (!Array.isArray(userArmies) || userArmies.length === 0) {
+        userArmies = [DEFAULT_RACE];
     }
-};
+} catch (e) {
+    console.error("Помилка пам'яті, скидаю до стандартної раси");
+    userArmies = [DEFAULT_RACE];
+}
 
 let userArmies = JSON.parse(localStorage.getItem('beluga_user_armies')) || [DEFAULT_RACE];
 let state = { units: [], money: {1: 500000, 2: 500000}, cities: [], playerConfigs: {} };
