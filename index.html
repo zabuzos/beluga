@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beluga Battle - Units Fix</title>
+    <title>Beluga Battle - Full Army Editor</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; margin: 0; padding: 15px; }
         .nav { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; }
@@ -19,11 +19,11 @@
         .card { background: #ecf0f1; color: #333; padding: 10px; margin-bottom: 15px; border-radius: 10px; text-align: center; font-size: 13px; }
         .shopImg { width: 100%; height: 60px; object-fit: contain; background: #ddd; border-radius: 5px; margin: 5px 0; }
         .unitImg { width: 85%; height: 85%; object-fit: contain; position: absolute; pointer-events: none; z-index: 2; }
-        .unitP1 { filter: drop-shadow(0 0 8px #3498db); }
-        .unitP2 { filter: drop-shadow(0 0 8px #e74c3c); }
-        .hp { position: absolute; bottom: 4px; right: 4px; font-size: 12px; background: red; color: white; padding: 2px 5px; border-radius: 4px; z-index: 3; font-weight: bold; }
+        .hp { position: absolute; bottom: 4px; right: 4px; font-size: 11px; background: red; color: white; padding: 1px 4px; border-radius: 3px; z-index: 3; }
         .btn { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
         .btn-reset { background: #e74c3c; margin-top: 15px; max-width: 200px; }
+        .unit-edit-card { background: #34495e; padding: 10px; border-radius: 8px; border: 1px solid #555; position: relative; }
+        .unit-edit-card input { background: #2c3e50; color: white; border: 1px solid #444; padding: 4px; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 5px; font-size: 12px; }
         input, select { background: #34495e; color: white; border: 1px solid #555; padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         .city { background: rgba(241, 196, 15, 0.4) !important; border: 2px solid gold !important; }
         .selected { outline: 4px solid white; box-shadow: 0 0 20px white; z-index: 5; }
@@ -40,10 +40,7 @@
     <div id="menu">
         <h1 style="color: #f1c40f;">⚔️ BELUGA BATTLE</h1>
         <input type="text" id="roomInput" placeholder="Код кімнати">
-        <select id="playerSelect">
-            <option value="1">Гравець 1 (Сині - Зліва)</option>
-            <option value="2">Гравець 2 (Червоні - Справа)</option>
-        </select>
+        <select id="playerSelect"><option value="1">Гравець 1 (Сині)</option><option value="2">Гравець 2 (Червоні)</option></select>
         <select id="teamSelect"></select>
         <button class="btn" id="joinBtn">УВІЙТИ В БИТВУ</button>
     </div>
@@ -52,12 +49,11 @@
             <div class="panel" id="leftPanel"></div>
             <div style="text-align: center;">
                 <div id="turnPanel" style="background:#34495e; padding:10px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Хід: <b id="turn">1</b> | P<b id="playerDisplay">1</b></span>
-                    <span>💰 <b id="myMoney">0</b>к</span>
-                    <button onclick="window.endTurn()" style="background:#e67e22; color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">OK</button>
+                    <span>Хід: <b id="turn">1</b> | P<b id="playerDisplay">1</b> | 💰 <b id="myMoney">0</b>к</span>
+                    <button onclick="window.endTurn()" style="background:#e67e22; color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">КІНЕЦЬ ХОДУ</button>
                 </div>
                 <div id="gridWrapper"><div id="grid"></div></div>
-                <button class="btn btn-reset" onclick="window.resetGame()">🔄 НОВА ГРА</button>
+                <button class="btn btn-reset" onclick="window.resetGame()">🔄 НОВА ГРА (Скинути поле)</button>
             </div>
             <div class="panel" id="rightPanel"></div>
         </div>
@@ -65,7 +61,7 @@
 </div>
 
 <div id="army-tab" class="tab-content">
-    <div style="max-width:850px; margin:0 auto; background:#34495e; padding:20px; border-radius:15px;">
+    <div style="max-width:900px; margin:0 auto; background:#34495e; padding:20px; border-radius:15px;">
         <button class="btn" onclick="window.addNewArmy()">+ Створити нову расу</button>
         <div id="armyList" style="margin-top:20px;"></div>
     </div>
@@ -79,16 +75,16 @@ const firebaseConfig = { apiKey: "AIzaSyBM6L4pO6cCkCX6mhChNG0-5RxKYOIV1fY", data
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const DEFAULT_RACE = {
+const DEFAULT_RACES = [{
     name: "Люди",
     units: {
         u1: { name: "Мечник", speed: 3, atk: 20, hp: 60, price: 40000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/infantry_p1.png" },
         u2: { name: "Лучник", speed: 2, atk: 15, hp: 40, price: 60000, img: "https://raw.githubusercontent.com/zabuzos/beluga/main/img/shooter_p1.png" }
     }
-};
+}];
 
 let stored = localStorage.getItem('beluga_user_armies');
-window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(stored) : [DEFAULT_RACE];
+window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(stored) : DEFAULT_RACES;
 
 let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null, isGameOver = false;
@@ -112,25 +108,43 @@ window.saveAndRefresh = () => {
 };
 
 window.addNewArmy = () => {
-    const n = prompt("Назва раси:"); if(n) { window.userArmies.push({name: n, units: {}}); window.saveAndRefresh(); }
+    const n = prompt("Назва нової раси:"); if(n) { window.userArmies.push({name: n, units: {}}); window.saveAndRefresh(); }
 };
 
 window.renderArmyEditor = () => {
     const list = document.getElementById('armyList');
     list.innerHTML = window.userArmies.map((army, aIdx) => `
-        <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; margin-bottom:20px; border: 1px solid #555;">
-            <input type="text" value="${army.name}" onchange="window.userArmies[${aIdx}].name=this.value; window.saveAndRefresh()" style="color:gold; background:none; border:none; border-bottom:1px solid gold; width:200px; font-weight:bold;">
-            <button onclick="window.userArmies.splice(${aIdx},1); window.saveAndRefresh()" style="float:right; color:red; border:none; background:none; cursor:pointer;">🗑️</button>
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-top:10px;">
-                ${Object.keys(army.units || {}).map(uId => `
-                    <div style="background:#2c3e50; padding:10px; border-radius:8px; border:1px solid #444;">
-                        <input type="text" value="${army.units[uId].name}" onchange="window.userArmies[${aIdx}].units['${uId}'].name=this.value; window.saveAndRefresh()">
-                        <input type="number" value="${army.units[uId].price}" onchange="window.userArmies[${aIdx}].units['${uId}'].price=parseInt(this.value); window.saveAndRefresh()" style="width:48%;">
-                        <input type="number" value="${army.units[uId].hp}" onchange="window.userArmies[${aIdx}].units['${uId}'].hp=parseInt(this.value); window.saveAndRefresh()" style="width:48%;">
-                    </div>
-                `).join('')}
+        <div style="background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; margin-bottom:30px; border: 2px solid #444;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <input type="text" value="${army.name}" onchange="window.userArmies[${aIdx}].name=this.value; window.saveAndRefresh()" style="font-size:20px; color:gold; width:60%; border-bottom:2px solid gold; background:none; border-top:none; border-left:none; border-right:none; font-weight:bold;">
+                <button onclick="if(confirm('Видалити всю расу?')){window.userArmies.splice(${aIdx},1); window.saveAndRefresh()}" style="color:red; background:none; border:none; cursor:pointer;">🗑️ Видалити расу</button>
             </div>
-            <button class="btn" style="margin-top:10px; background:#3498db;" onclick="const id='u'+Date.now(); window.userArmies[${aIdx}].units[id]={name:'Новий',speed:3,atk:20,hp:100,price:50000,img:''}; window.saveAndRefresh()">+ Додати</button>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                ${Object.keys(army.units || {}).map(uId => {
+                    const u = army.units[uId];
+                    return `
+                    <div class="unit-edit-card">
+                        <button onclick="delete window.userArmies[${aIdx}].units['${uId}']; window.saveAndRefresh()" style="position:absolute; top:5px; right:5px; background:none; border:none; color:red; cursor:pointer; font-weight:bold;">✕</button>
+                        <label style="font-size:10px; opacity:0.7;">Назва:</label>
+                        <input type="text" value="${u.name}" onchange="window.userArmies[${aIdx}].units['${uId}'].name=this.value; window.saveAndRefresh()">
+                        <div style="display:flex; gap:5px;">
+                            <div><label style="font-size:10px;">HP</label><input type="number" value="${u.hp}" onchange="window.userArmies[${aIdx}].units['${uId}'].hp=parseInt(this.value); window.saveAndRefresh()"></div>
+                            <div><label style="font-size:10px;">Speed</label><input type="number" value="${u.speed}" onchange="window.userArmies[${aIdx}].units['${uId}'].speed=parseInt(this.value); window.saveAndRefresh()"></div>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <div><label style="font-size:10px;">ATK</label><input type="number" value="${u.atk}" onchange="window.userArmies[${aIdx}].units['${uId}'].atk=parseInt(this.value); window.saveAndRefresh()"></div>
+                            <div><label style="font-size:10px;">Ціна</label><input type="number" value="${u.price}" onchange="window.userArmies[${aIdx}].units['${uId}'].price=parseInt(this.value); window.saveAndRefresh()"></div>
+                        </div>
+                        <label style="font-size:10px; opacity:0.7;">URL Картинки:</label>
+                        <input type="text" value="${u.img}" onchange="window.userArmies[${aIdx}].units['${uId}'].img=this.value; window.saveAndRefresh()">
+                        <img src="${u.img}" style="width:100%; height:40px; object-fit:contain; background:#222; border-radius:4px;" onerror="this.style.opacity=0">
+                    </div>`;
+                }).join('')}
+                <div style="border: 2px dashed #666; display:flex; align-items:center; justify-content:center; min-height:150px; cursor:pointer; border-radius:8px;" 
+                     onclick="const id='u'+Date.now(); window.userArmies[${aIdx}].units[id]={name:'Воїн',speed:3,atk:20,hp:60,price:40000,img:''}; window.saveAndRefresh()">
+                    + Додати юніта
+                </div>
+            </div>
         </div>
     `).join('');
 };
@@ -139,7 +153,7 @@ document.getElementById('joinBtn').onclick = async () => {
     room = document.getElementById('roomInput').value.trim();
     playerId = parseInt(document.getElementById('playerSelect').value);
     const armyIdx = document.getElementById('teamSelect').value;
-    if(!room || !window.userArmies[armyIdx]) return alert("Оберіть кімнату та расу!");
+    if(!room || !window.userArmies[armyIdx]) return alert("Введіть код кімнати!");
 
     const myChoice = window.userArmies[armyIdx];
     const snap = await get(ref(db, 'games/'+room));
@@ -147,13 +161,12 @@ document.getElementById('joinBtn').onclick = async () => {
     if(!snap.exists()) {
         state = { units: [], money: {1:500000, 2:500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
     } else {
-        const d = snap.val();
-        state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
+        state = snap.val().state; turn = snap.val().turn; currentPlayer = snap.val().currentPlayer;
         if(!state.playerConfigs) state.playerConfigs = {};
     }
     
     state.playerConfigs[playerId] = myChoice;
-    await set(ref(db, 'games/'+room), { state, turn, currentPlayer });
+    await window.saveGame();
 
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameArea').style.display = 'block';
@@ -167,12 +180,10 @@ document.getElementById('joinBtn').onclick = async () => {
 window.saveGame = () => set(ref(db, 'games/'+room), { state, turn, currentPlayer });
 
 window.resetGame = async () => {
-    if(!confirm("Скинути гру та почати спочатку?")) return;
-    state.units = [];
-    state.money = {1:500000, 2:500000};
-    turn = 1;
-    currentPlayer = 1;
-    isGameOver = false;
+    if(!confirm("Почати нову битву?")) return;
+    const configs = state.playerConfigs || {};
+    state.units = []; state.money = {1:500000, 2:500000}; state.playerConfigs = configs;
+    turn = 1; currentPlayer = 1; isGameOver = false; selectedUnit = null;
     await window.saveGame();
 };
 
@@ -193,7 +204,8 @@ window.cellClick = (x, y) => {
     const unitAtCell = state.units.find(u => u.x === x && u.y === y);
 
     if(buyMode) {
-        const cfg = state.playerConfigs[playerId].units[buyMode];
+        const cfg = state.playerConfigs[playerId]?.units?.[buyMode];
+        if(!cfg) return;
         const isMyHalf = (playerId === 1 && x < 9) || (playerId === 2 && x > 8);
         if(!unitAtCell && isMyHalf && (state.money[playerId] >= cfg.price)) {
             state.money[playerId] -= cfg.price;
@@ -219,7 +231,7 @@ window.endTurn = () => {
     state.money[currentPlayer] += 100000;
     state.units.forEach(u => { 
         if(u.owner === currentPlayer) { 
-            const cfg = state.playerConfigs[u.owner]?.units[u.type]; 
+            const cfg = state.playerConfigs[u.owner]?.units?.[u.type]; 
             u.movePoints = cfg ? (cfg.speed || 3) : 3; 
         } 
     });
@@ -234,7 +246,7 @@ window.render = () => {
     state.cities.forEach(c => { const cell = document.getElementById(`c-${c.x}-${c.y}`); if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; } });
     state.units.forEach(u => {
         const cell = document.getElementById(`c-${u.x}-${u.y}`);
-        const cfg = state.playerConfigs[u.owner]?.units[u.type];
+        const cfg = state.playerConfigs[u.owner]?.units?.[u.type];
         if(!cell || !cfg) return;
         const img = document.createElement('img'); img.className = 'unitImg '+(u.owner===1?'unitP1':'unitP2'); img.src = cfg.img;
         img.onerror = () => { img.style.display='none'; cell.innerHTML += (u.owner===1?'🟦':'🟥'); };
@@ -249,27 +261,16 @@ window.renderShop = () => {
     [1,2].forEach(p => {
         const target = p === 1 ? 'leftPanel' : 'rightPanel';
         const panel = document.getElementById(target);
-        
-        // Магія: якщо в базі ще порожньо для НАС, беремо зі свого селектора
-        let config = state.playerConfigs ? state.playerConfigs[p] : null;
-        if(!config && p === playerId) {
-            const armyIdx = document.getElementById('teamSelect').value;
-            config = window.userArmies[armyIdx];
-        }
-
-        if(!config || !config.units) { 
-            panel.innerHTML = `<p style="text-align:center; opacity:0.5; margin-top:50px;">Очікування P${p}...</p>`; 
-            return; 
-        }
-        
+        const config = state.playerConfigs?.[p];
+        if(!config || !config.units) { panel.innerHTML = `<p style="opacity:0.5; text-align:center;">Очікування P${p}...</p>`; return; }
         let html = `<h3 style="text-align:center; color:${p===1?'#3498db':'#e74c3c'}">${config.name}</h3>`;
         Object.keys(config.units).forEach(k => {
             const u = config.units[k];
-            html += `<div class="card" style="border-left: 5px solid ${p===1?'#3498db':'#e74c3c'}">
+            html += `<div class="card" style="border-left:5px solid ${p===1?'#3498db':'#e74c3c'}">
                 <b>${u.name}</b><br>
                 <img src="${u.img}" class="shopImg" onerror="this.src='https://via.placeholder.com/60?text=UNIT'">
-                <div>❤️${u.hp} | 🛒${u.price/1000}к</div>
-                <button class="btn" style="padding:5px; margin-top:5px;" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>КУПИТИ</button>
+                <div>❤️${u.hp} | ⚔️${u.atk} | 👟${u.speed}</div>
+                <button class="btn" style="padding:5px; margin-top:5px;" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${u.price/1000}к</button>
             </div>`;
         });
         panel.innerHTML = html;
@@ -277,17 +278,13 @@ window.renderShop = () => {
 };
 
 window.setBuy = (k) => { buyMode = k; };
-
 window.checkWin = () => {
     if(isGameOver || state.units.length === 0) return;
-    const p1Cities = state.cities.filter(c => c.x === 0);
-    const p2Cities = state.cities.filter(c => c.x === 17);
-
-    const p2CapturedAll = p1Cities.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 2));
-    const p1CapturedAll = p2Cities.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 1));
-
-    if(p2CapturedAll) { alert("ГРАВЕЦЬ 2 ПЕРЕМІГ!"); isGameOver = true; }
-    else if(p1CapturedAll) { alert("ГРАВЕЦЬ 1 ПЕРЕМІГ!"); isGameOver = true; }
+    const p1C = state.cities.filter(c => c.x === 0), p2C = state.cities.filter(c => c.x === 17);
+    const p2Win = p1C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 2));
+    const p1Win = p2C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 1));
+    if(p2Win) { alert("ГРАВЕЦЬ 2 ПЕРЕМІГ!"); isGameOver = true; }
+    else if(p1Win) { alert("ГРАВЕЦЬ 1 ПЕРЕМІГ!"); isGameOver = true; }
 };
 
 window.updateTeamList();
