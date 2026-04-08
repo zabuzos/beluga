@@ -82,7 +82,7 @@ const DEFAULT_RACE = { name: "Люди", units: { u1: { name: "Мечник", sp
 let stored = localStorage.getItem('beluga_user_armies');
 window.userArmies = (stored && JSON.parse(stored).length > 0) ? JSON.parse(stored) : [DEFAULT_RACE];
 
-let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {1:null, 2:null} };
+let state = { units: [], money: {1: 500000, 2: 500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
 let room = "", playerId = 1, currentPlayer = 1, turn = 1, selectedUnit = null, buyMode = null, isGameOver = false;
 
 window.openTab = (e, id) => {
@@ -141,23 +141,26 @@ document.getElementById('joinBtn').onclick = async () => {
     if(!room || !window.userArmies[armyIdx]) return alert("Дані вказано невірно!");
 
     const myChoice = window.userArmies[armyIdx];
-    const snap = await get(ref(db, 'games/'+room));
+    const roomRef = ref(db, 'games/' + room);
+    const snap = await get(roomRef);
     
     if(!snap.exists()) {
-        state = { units: [], money: {1:500000, 2:500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {1:null, 2:null} };
+        state = { units: [], money: {1:500000, 2:500000}, cities: [{x:0, y:2}, {x:0, y:7}, {x:17, y:2}, {x:17, y:7}], playerConfigs: {} };
+        state.playerConfigs[playerId] = myChoice;
+        await set(roomRef, { state, turn: 1, currentPlayer: 1 });
     } else {
-        const d = snap.val(); state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
+        const d = snap.val();
+        state = d.state;
+        if (!state.playerConfigs) state.playerConfigs = {};
+        state.playerConfigs[playerId] = myChoice;
+        await update(roomRef, { "state/playerConfigs": state.playerConfigs });
     }
-    
-    // ВАЖЛИВО: Оновлюємо конфіг ПЕРЕД підпискою на зміни
-    state.playerConfigs[playerId] = myChoice;
-    await set(ref(db, 'games/'+room), { state, turn, currentPlayer });
 
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameArea').style.display = 'block';
     window.createGrid();
 
-    onValue(ref(db, 'games/'+room), (s) => {
+    onValue(roomRef, (s) => {
         const d = s.val(); if(!d) return;
         state = d.state; turn = d.turn; currentPlayer = d.currentPlayer;
         window.render(); window.checkWin();
@@ -168,8 +171,7 @@ window.saveGame = () => set(ref(db, 'games/'+room), { state, turn, currentPlayer
 
 window.resetGame = async () => {
     if(!confirm("Скинути поле?")) return;
-    const currentConfigs = state.playerConfigs;
-    state.units = []; state.money = {1:500000, 2:500000}; state.playerConfigs = currentConfigs;
+    state.units = []; state.money = {1:500000, 2:500000};
     turn = 1; currentPlayer = 1; isGameOver = false; buyMode = null;
     await window.saveGame();
 };
@@ -192,7 +194,7 @@ window.cellClick = (x, y) => {
 
     if(buyMode) {
         const myRace = state.playerConfigs[playerId];
-        if(!myRace) return;
+        if(!myRace || !myRace.units) return;
         const cfg = myRace.units[buyMode];
         const isMyHalf = (playerId === 1 && x < 9) || (playerId === 2 && x >= 9);
         if(!unitAtCell && isMyHalf && state.money[playerId] >= cfg.price) {
@@ -206,7 +208,7 @@ window.cellClick = (x, y) => {
     if(unitAtCell && unitAtCell.owner === playerId) { selectedUnit = unitAtCell; window.render(); return; }
     if(selectedUnit && !unitAtCell) {
         const dist = Math.max(Math.abs(selectedUnit.x - x), Math.abs(selectedUnit.y - y));
-        if(dist <= selectedUnit.movePoints) {
+        if(dist <= (selectedUnit.movePoints || 0)) {
             selectedUnit.x = x; selectedUnit.y = y; selectedUnit.movePoints -= dist; window.saveGame();
         }
     }
@@ -216,7 +218,7 @@ window.endTurn = () => {
     if(currentPlayer !== playerId || isGameOver) return;
     currentPlayer = (currentPlayer === 1) ? 2 : 1;
     if(currentPlayer === 1) turn++;
-    state.money[currentPlayer] += 100000;
+    state.money[currentPlayer] = (state.money[currentPlayer] || 0) + 100000;
     state.units.forEach(u => { 
         if(u.owner === currentPlayer) { 
             const cfg = state.playerConfigs[u.owner]?.units[u.type]; 
@@ -232,9 +234,11 @@ window.render = () => {
     document.getElementById('myMoney').innerText = Math.floor((state.money[playerId] || 0)/1000);
     document.querySelectorAll('.cell').forEach(c => { c.innerHTML = ''; c.classList.remove('selected','city'); });
     state.cities.forEach(c => { const cell = document.getElementById(`c-${c.x}-${c.y}`); if(cell) { cell.classList.add('city'); cell.innerHTML = '🏰'; } });
+    
     state.units.forEach(u => {
         const cell = document.getElementById(`c-${u.x}-${u.y}`);
-        const cfg = state.playerConfigs[u.owner]?.units[u.type];
+        const config = state.playerConfigs?.[u.owner];
+        const cfg = config?.units?.[u.type];
         if(!cell || !cfg) return;
         const img = document.createElement('img'); img.className = 'unitImg '+(u.owner===1?'unitP1':'unitP2'); 
         img.src = cfg.img; img.onerror = () => { cell.innerHTML += (u.owner===1?'🟦':'🟥'); };
@@ -248,17 +252,22 @@ window.render = () => {
 window.renderShop = () => {
     [1,2].forEach(p => {
         const panel = document.getElementById(p === 1 ? 'leftPanel' : 'rightPanel');
+        if (!panel) return;
         const config = state.playerConfigs?.[p];
-        if(!config) { panel.innerHTML = `<p style="text-align:center; opacity:0.5;">Очікування P${p}...</p>`; return; }
+        if(!config || !config.units) { 
+            panel.innerHTML = `<p style="text-align:center; opacity:0.5;">Очікування P${p}...</p>`; 
+            return; 
+        }
         
         let html = `<h3 style="text-align:center; color:${p===1?'#3498db':'#e74c3c'}">${config.name}</h3>`;
         Object.keys(config.units).forEach(k => {
             const u = config.units[k];
+            const priceK = (u.price || 0) / 1000;
             html += `<div class="card" style="border-left:5px solid ${p===1?'#3498db':'#e74c3c'}; ${buyMode===k && playerId===p ? 'border:2px solid gold' : ''}">
                 <b>${u.name}</b><br>
                 <img src="${u.img}" class="shopImg" onerror="this.src='https://via.placeholder.com/65?text=UNIT'">
                 <div style="font-size:11px; margin-bottom:5px;">❤️${u.hp} | ⚔️${u.atk} | 👟${u.speed || 3}</div>
-                <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${u.price/1000}к</button>
+                <button class="btn" onclick="window.setBuy('${k}')" ${playerId!==p||currentPlayer!==p||isGameOver?'disabled':''}>🛒 ${priceK}к</button>
             </div>`;
         });
         panel.innerHTML = html;
@@ -268,7 +277,7 @@ window.renderShop = () => {
 window.setBuy = (k) => { buyMode = (buyMode === k) ? null : k; window.render(); };
 
 window.checkWin = () => {
-    if(isGameOver || state.units.length === 0) return;
+    if(isGameOver || !state.units || state.units.length === 0) return;
     const p1C = state.cities.filter(c => c.x === 0), p2C = state.cities.filter(c => c.x === 17);
     const p2Win = p1C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 2));
     const p1Win = p2C.every(c => state.units.some(u => u.x === c.x && u.y === c.y && u.owner === 1));
